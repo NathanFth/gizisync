@@ -1,0 +1,824 @@
+     1→"use client";
+     2→
+     3→import { useMemo } from "react";
+     4→import {
+     5→  useStore,
+     6→  useDashboardStats,
+     7→  useGiziDistribusi,
+     8→  usePriorityAlerts,
+     9→  useTrenPengukuranBulanan,
+    10→} from "@/lib/store";
+    11→import { StatCard } from "@/components/shared/stat-card";
+    12→import { AlertStatusBadge } from "@/components/shared/status-badge";
+    13→import { EmptyState } from "@/components/shared/empty-state";
+    14→import { Card } from "@/components/ui/card";
+    15→import { Button } from "@/components/ui/button";
+    16→import {
+    17→  Baby,
+    18→  HeartPulse,
+    19→  TrendingUp,
+    20→  AlertTriangle,
+    21→  ArrowRight,
+    22→  Plus,
+    23→  Calculator,
+    24→  FileBarChart,
+    25→  Activity,
+    26→  Calendar,
+    27→  Clock,
+    28→  MapPin,
+    29→  Utensils,
+    30→  Droplet,
+    31→  Syringe,
+    32→  ChevronRight,
+    33→  Bell,
+    34→} from "lucide-react";
+    35→import {
+    36→  PieChart,
+    37→  Pie,
+    38→  Cell,
+    39→  ResponsiveContainer,
+    40→  Tooltip,
+    41→  BarChart,
+    42→  Bar,
+    43→  XAxis,
+    44→  YAxis,
+    45→  CartesianGrid,
+    46→  Legend,
+    47→  LineChart,
+    48→  Line,
+    49→} from "recharts";
+    50→import { formatTanggalID, NAMA_BULAN_SINGKAT } from "@/lib/data/mock-data";
+    51→
+    52→export function DashboardView() {
+    53→  const stats = useDashboardStats();
+    54→  const distribusi = useGiziDistribusi();
+    55→  const alerts = usePriorityAlerts();
+    56→  const trenBulanan = useTrenPengukuranBulanan();
+    57→  const { setView, viewBalitaDetail } = useStore();
+    58→
+    59→  const totalDistribusi = distribusi.reduce((sum, d) => sum + d.nilai, 0) || 1;
+    60→  const giziBaikPersen =
+    61→    distribusi.find((d) => d.nama === "Gizi Baik")?.nilai ?? 0;
+    62→
+    63→  return (
+    64→    <div className="space-y-6">
+    65→      {/* Summary Cards */}
+    66→      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    67→        <StatCard
+    68→          icon={Baby}
+    69→          label="Total Balita Terdaftar"
+    70→          value={stats.totalBalita}
+    71→          trend={stats.perubahanBalitaBulanIni}
+    72→          trendLabel="bulan ini"
+    73→          iconColor="text-emerald-600"
+    74→          iconBg="bg-emerald-50 dark:bg-emerald-500/10"
+    75→        />
+    76→        {/* <StatCard
+    77→          icon={HeartPulse}
+    78→          label="Ibu Hamil Terpantau"
+    79→          value={stats.totalIbuHamil}
+    80→          trend={stats.perubahanIbuHamilBulanIni}
+    81→          trendLabel="bulan ini"
+    82→          iconColor="text-rose-600"
+    83→          iconBg="bg-rose-50 dark:bg-rose-500/10"
+    84→        /> */}
+    85→        <StatCard
+    86→          icon={TrendingUp}
+    87→          label="Persentase Gizi Baik"
+    88→          value={stats.persentaseGiziBaik}
+    89→          unit="%"
+    90→          trend={stats.perubahanPersentaseGiziBaik}
+    91→          trendLabel="dari bulan lalu"
+    92→          iconColor="text-sky-600"
+    93→          iconBg="bg-sky-50 dark:bg-sky-500/10"
+    94→        />
+    95→        <StatCard
+    96→          icon={AlertTriangle}
+    97→          label="Risiko Stunting"
+    98→          value={stats.totalRisikoStunting}
+    99→          trendLabel="perlu pantauan"
+   100→          iconColor="text-amber-600"
+   101→          iconBg="bg-amber-50 dark:bg-amber-500/10"
+   102→        />
+   103→      </div>
+   104→
+   105→      {/* Today's Summary Banner */}
+   106→      <TodaysSummary />
+   107→
+   108→      {/* Quick Actions */}
+   109→      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+   110→        <QuickAction
+   111→          icon={Plus}
+   112→          label="Tambah Balita"
+   113→          onClick={() => setView("balita")}
+   114→          color="emerald"
+   115→        />
+   116→        <QuickAction
+   117→          icon={Calculator}
+   118→          label="Hitung Z-Score"
+   119→          onClick={() => setView("kalkulator")}
+   120→          color="sky"
+   121→        />
+   122→        <QuickAction
+   123→          icon={FileBarChart}
+   124→          label="Buat Laporan"
+   125→          onClick={() => setView("laporan")}
+   126→          color="amber"
+   127→        />
+   128→        {/* <QuickAction
+   129→          icon={HeartPulse}
+   130→          label="Data Ibu Hamil"
+   131→          onClick={() => setView("ibu-hamil")}
+   132→          color="rose"
+   133→        /> */}
+   134→      </div>
+   135→
+   136→      {/* Monthly Trends Chart */}
+   137→      <Card className="p-5">
+   138→        <div className="mb-4 flex items-center justify-between">
+   139→          <div>
+   140→            <h3 className="flex items-center gap-2 text-base font-semibold text-foreground">
+   141→              <Calendar className="h-5 w-5 text-emerald-600" />
+   142→              Tren Pengukuran 6 Bulan Terakhir
+   143→            </h3>
+   144→            <p className="mt-0.5 text-sm text-muted-foreground">
+   145→              Jumlah pengukuran dan kasus stunting/wasting per bulan
+   146→            </p>
+   147→          </div>
+   148→        </div>
+   149→        <ResponsiveContainer width="100%" height={260}>
+   150→          <BarChart
+   151→            data={trenBulanan}
+   152→            margin={{ top: 5, right: 10, bottom: 5, left: -15 }}
+   153→          >
+   154→            <CartesianGrid
+   155→              strokeDasharray="3 3"
+   156→              stroke="hsl(var(--border))"
+   157→              opacity={0.5}
+   158→            />
+   159→            <XAxis
+   160→              dataKey="bulan"
+   161→              tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
+   162→              axisLine={false}
+   163→              tickLine={false}
+   164→            />
+   165→            <YAxis
+   166→              tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
+   167→              axisLine={false}
+   168→              tickLine={false}
+   169→              allowDecimals={false}
+   170→            />
+   171→            <Tooltip
+   172→              contentStyle={{
+   173→                borderRadius: "8px",
+   174→                border: "1px solid hsl(var(--border))",
+   175→                fontSize: "12px",
+   176→                background: "hsl(var(--popover))",
+   177→                color: "hsl(var(--popover-foreground))",
+   178→              }}
+   179→            />
+   180→            <Legend wrapperStyle={{ fontSize: "12px" }} iconType="circle" />
+   181→            <Bar
+   182→              dataKey="jumlah"
+   183→              name="Total Pengukuran"
+   184→              fill="#10b981"
+   185→              radius={[4, 4, 0, 0]}
+   186→              maxBarSize={40}
+   187→            />
+   188→            <Bar
+   189→              dataKey="stunting"
+   190→              name="Kasus Stunting"
+   191→              fill="#f59e0b"
+   192→              radius={[4, 4, 0, 0]}
+   193→              maxBarSize={40}
+   194→            />
+   195→            <Bar
+   196→              dataKey="wasting"
+   197→              name="Kasus Wasting"
+   198→              fill="#ef4444"
+   199→              radius={[4, 4, 0, 0]}
+   200→              maxBarSize={40}
+   201→            />
+   202→          </BarChart>
+   203→        </ResponsiveContainer>
+   204→      </Card>
+   205→
+   206→      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+   207→        {/* Priority Alert Table */}
+   208→        <Card className="lg:col-span-2">
+   209→          <div className="flex items-center justify-between border-b border-border p-5">
+   210→            <div>
+   211→              <h3 className="flex items-center gap-2 text-base font-semibold text-foreground">
+   212→                <AlertTriangle className="h-5 w-5 text-amber-500" />
+   213→                Balita Perlu Pantauan Khusus
+   214→              </h3>
+   215→              <p className="mt-0.5 text-sm text-muted-foreground">
+   216→                Balita dengan Z-Score di bawah -2 SD
+   217→              </p>
+   218→            </div>
+   219→            <Button variant="ghost" size="sm" onClick={() => setView("balita")}>
+   220→              Lihat Semua <ArrowRight className="ml-1 h-4 w-4" />
+   221→            </Button>
+   222→          </div>
+   223→          <div className="p-2">
+   224→            {alerts.length === 0 ? (
+   225→              <EmptyState
+   226→                icon={Activity}
+   227→                title="Tidak ada balita prioritas"
+   228→                description="Semua balita dalam status gizi normal. Pantauan khusus tidak diperlukan saat ini."
+   229→              />
+   230→            ) : (
+   231→              <div className="overflow-x-auto">
+   232→                <table className="w-full text-sm">
+   233→                  <thead>
+   234→                    <tr className="border-b border-border text-left text-xs uppercase tracking-wider text-muted-foreground">
+   235→                      <th className="px-3 py-3 font-medium">Nama Balita</th>
+   236→                      <th className="px-3 py-3 font-medium">Usia</th>
+   237→                      <th className="px-3 py-3 font-medium">Z-Score</th>
+   238→                      <th className="px-3 py-3 font-medium">Indikator</th>
+   239→                      <th className="px-3 py-3 font-medium">Status</th>
+   240→                      <th className="px-3 py-3"></th>
+   241→                    </tr>
+   242→                  </thead>
+   243→                  <tbody className="divide-y divide-border">
+   244→                    {alerts.slice(0, 5).map((alert) => (
+   245→                      <tr
+   246→                        key={alert.id}
+   247→                        className="transition-colors hover:bg-muted/50"
+   248→                      >
+   249→                        <td className="px-3 py-3 font-medium text-foreground">
+   250→                          {alert.namaBalita}
+   251→                        </td>
+   252→                        <td className="px-3 py-3 text-muted-foreground">
+   253→                          {alert.usiaBulan} bulan
+   254→                        </td>
+   255→                        <td className="px-3 py-3">
+   256→                          <span className="font-mono font-semibold text-foreground">
+   257→                            {alert.zScoreTerakhir > 0 ? "+" : ""}
+   258→                            {alert.zScoreTerakhir.toFixed(2)}
+   259→                          </span>
+   260→                        </td>
+   261→                        <td className="px-3 py-3 text-muted-foreground">
+   262→                          {alert.indikator}
+   263→                        </td>
+   264→                        <td className="px-3 py-3">
+   265→                          <AlertStatusBadge status={alert.statusAlert} />
+   266→                        </td>
+   267→                        <td className="px-3 py-3 text-right">
+   268→                          <Button
+   269→                            variant="ghost"
+   270→                            size="sm"
+   271→                            onClick={() => viewBalitaDetail(alert.id)}
+   272→                          >
+   273→                            Detail
+   274→                          </Button>
+   275→                        </td>
+   276→                      </tr>
+   277→                    ))}
+   278→                  </tbody>
+   279→                </table>
+   280→              </div>
+   281→            )}
+   282→          </div>
+   283→        </Card>
+   284→
+   285→        {/* Analytics Widget */}
+   286→        <Card className="flex flex-col">
+   287→          <div className="border-b border-border p-5">
+   288→            <h3 className="text-base font-semibold text-foreground">
+   289→              Distribusi Status Gizi
+   290→            </h3>
+   291→            <p className="mt-0.5 text-sm text-muted-foreground">
+   292→              Berdasarkan pengukuran terakhir
+   293→            </p>
+   294→          </div>
+   295→          <div className="flex flex-1 flex-col items-center justify-center p-5">
+   296→            <div className="relative h-48 w-48">
+   297→              <ResponsiveContainer width="100%" height="100%">
+   298→                <PieChart>
+   299→                  <Pie
+   300→                    data={distribusi}
+   301→                    dataKey="nilai"
+   302→                    nameKey="nama"
+   303→                    cx="50%"
+   304→                    cy="50%"
+   305→                    innerRadius={55}
+   306→                    outerRadius={85}
+   307→                    paddingAngle={2}
+   308→                    strokeWidth={0}
+   309→                  >
+   310→                    {distribusi.map((entry, i) => (
+   311→                      <Cell key={i} fill={entry.warna} />
+   312→                    ))}
+   313→                  </Pie>
+   314→                  <Tooltip
+   315→                    formatter={(value: number) =>
+   316→                      `${((value / totalDistribusi) * 100).toFixed(0)}%`
+   317→                    }
+   318→                    contentStyle={{
+   319→                      borderRadius: "8px",
+   320→                      border: "1px solid hsl(var(--border))",
+   321→                      fontSize: "12px",
+   322→                      background: "hsl(var(--popover))",
+   323→                      color: "hsl(var(--popover-foreground))",
+   324→                    }}
+   325→                  />
+   326→                </PieChart>
+   327→              </ResponsiveContainer>
+   328→              <div className="absolute inset-0 flex flex-col items-center justify-center">
+   329→                <span className="text-3xl font-bold text-foreground">
+   330→                  {giziBaikPersen}%
+   331→                </span>
+   332→                <span className="text-xs font-medium text-muted-foreground">
+   333→                  Gizi Baik
+   334→                </span>
+   335→              </div>
+   336→            </div>
+   337→            <div className="mt-4 w-full space-y-2">
+   338→              {distribusi.map((item) => (
+   339→                <div
+   340→                  key={item.nama}
+   341→                  className="flex items-center justify-between text-sm"
+   342→                >
+   343→                  <div className="flex items-center gap-2">
+   344→                    <span
+   345→                      className="h-2.5 w-2.5 rounded-full"
+   346→                      style={{ backgroundColor: item.warna }}
+   347→                    />
+   348→                    <span className="text-muted-foreground">{item.nama}</span>
+   349→                  </div>
+   350→                  <span className="font-semibold text-foreground">
+   351→                    {item.nilai}%
+   352→                  </span>
+   353→                </div>
+   354→              ))}
+   355→            </div>
+   356→          </div>
+   357→        </Card>
+   358→      </div>
+   359→
+   360→      {/* Demographic Mini Charts */}
+   361→      <DemographicMiniCharts />
+   362→
+   363→      {/* Upcoming Schedule + Quick Module Access */}
+   364→      {/* <UpcomingScheduleWidget /> */}
+   365→    </div>
+   366→  );
+   367→}
+   368→
+   369→// --- Today's Summary Widget ---
+   370→function TodaysSummary() {
+   371→  const pengukuranList = useStore((s) => s.pengukuranList);
+   372→  const jadwalList = useStore((s) => s.jadwalList);
+   373→  const notifikasiList = useStore((s) => s.notifikasiList);
+   374→  const setView = useStore((s) => s.setView);
+   375→
+   376→  const todayStr = new Date().toISOString().slice(0, 10);
+   377→  const today = new Date();
+   378→
+   379→  const todayPengukuran = pengukuranList.filter(
+   380→    (p) => p.tanggalPengukuran === todayStr,
+   381→  );
+   382→  const todayJadwal = jadwalList.filter((j) => j.tanggal === todayStr);
+   383→  const unreadNotif = notifikasiList.filter((n) => !n.dibaca).length;
+   384→  const todayGiziBermasalah = todayPengukuran.filter(
+   385→    (p) => p.statusGizi !== "Normal" && p.statusGizi !== "Risiko Gizi Lebih",
+   386→  ).length;
+   387→
+   388→  const greeting =
+   389→    today.getHours() < 11
+   390→      ? "Selamat pagi"
+   391→      : today.getHours() < 15
+   392→        ? "Selamat siang"
+   393→        : today.getHours() < 18
+   394→          ? "Selamat sore"
+   395→          : "Selamat malam";
+   396→  const todayLabel = today.toLocaleDateString("id-ID", {
+   397→    weekday: "long",
+   398→    day: "numeric",
+   399→    month: "long",
+   400→    year: "numeric",
+   401→  });
+   402→
+   403→  return (
+   404→    <Card className="relative overflow-hidden border-emerald-200 bg-gradient-to-br from-emerald-50 via-teal-50 to-emerald-50 p-5 dark:border-emerald-500/20 dark:from-emerald-500/5 dark:via-teal-500/5 dark:to-emerald-500/5">
+   405→      {/* Decorative blob */}
+   406→      <div className="pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full bg-emerald-200/30 blur-3xl dark:bg-emerald-500/10" />
+   407→
+   408→      <div className="relative flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+   409→        <div className="min-w-0 flex-1">
+   410→          <p className="text-sm font-medium text-emerald-700 dark:text-emerald-400">
+   411→            {greeting}, Kader! 👋
+   412→          </p>
+   413→          <h3 className="mt-0.5 text-lg font-bold text-foreground">
+   414→            {todayLabel}
+   415→          </h3>
+   416→          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+   417→            <span className="flex items-center gap-1">
+   418→              <Activity className="h-3.5 w-3.5 text-emerald-600" />
+   419→              {todayPengukuran.length} pengukuran hari ini
+   420→            </span>
+   421→            {todayGiziBermasalah > 0 && (
+   422→              <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400">
+   423→                <AlertTriangle className="h-3.5 w-3.5" />
+   424→                {todayGiziBermasalah} perlu perhatian
+   425→              </span>
+   426→            )}
+   427→            {todayJadwal.length > 0 && (
+   428→              <span className="flex items-center gap-1 text-sky-600 dark:text-sky-400">
+   429→                <Calendar className="h-3.5 w-3.5" />
+   430→                {todayJadwal.length} kegiatan terjadwal
+   431→              </span>
+   432→            )}
+   433→            {unreadNotif > 0 && (
+   434→              <span className="flex items-center gap-1 text-rose-600 dark:text-rose-400">
+   435→                <Bell className="h-3.5 w-3.5" />
+   436→                {unreadNotif} notifikasi belum dibaca
+   437→              </span>
+   438→            )}
+   439→          </div>
+   440→        </div>
+   441→
+   442→        {todayJadwal.length > 0 ? (
+   443→          <div className="rounded-xl border border-emerald-200 bg-card/80 p-3 backdrop-blur-sm dark:border-emerald-500/20">
+   444→            <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+   445→              📌 Kegiatan Hari Ini
+   446→            </p>
+   447→            <p className="mt-0.5 text-sm font-semibold text-foreground">
+   448→              {todayJadwal[0].judul}
+   449→            </p>
+   450→            <p className="text-xs text-muted-foreground">
+   451→              {todayJadwal[0].jamMulai} - {todayJadwal[0].jamSelesai} ·{" "}
+   452→              {todayJadwal[0].lokasi}
+   453→            </p>
+   454→          </div>
+   455→        ) : (
+   456→          <Button
+   457→            onClick={() => setView("kalkulator")}
+   458→            size="sm"
+   459→            className="bg-emerald-600 hover:bg-emerald-700"
+   460→          >
+   461→            <Calculator className="mr-2 h-4 w-4" /> Mulai Pengukuran
+   462→          </Button>
+   463→        )}
+   464→      </div>
+   465→    </Card>
+   466→  );
+   467→}
+   468→
+   469→// --- Demographic Mini Charts ---
+   470→function DemographicMiniCharts() {
+   471→  const balitaList = useStore((s) => s.balitaList);
+   472→  const setView = useStore((s) => s.setView);
+   473→
+   474→  const laki = balitaList.filter((b) => b.jenisKelamin === "Laki-laki").length;
+   475→  const perempuan = balitaList.filter(
+   476→    (b) => b.jenisKelamin === "Perempuan",
+   477→  ).length;
+   478→  const total = balitaList.length || 1;
+   479→
+   480→  const ageGroups = [
+   481→    { label: "0-11", min: 0, max: 11, count: 0 },
+   482→    { label: "12-23", min: 12, max: 23, count: 0 },
+   483→    { label: "24-35", min: 24, max: 35, count: 0 },
+   484→    { label: "36-59", min: 36, max: 59, count: 0 },
+   485→  ];
+   486→  balitaList.forEach((b) => {
+   487→    const g = ageGroups.find(
+   488→      (g) => b.usiaBulan >= g.min && b.usiaBulan <= g.max,
+   489→    );
+   490→    if (g) g.count++;
+   491→  });
+   492→  const maxAgeCount = Math.max(...ageGroups.map((g) => g.count), 1);
+   493→
+   494→  const genderData = [
+   495→    { nama: "Laki-laki", nilai: laki, warna: "#0ea5e9" },
+   496→    { nama: "Perempuan", nilai: perempuan, warna: "#ec4899" },
+   497→  ];
+   498→
+   499→  return (
+   500→    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+   501→      {/* Gender distribution */}
+   502→      <Card className="p-5">
+   503→        <div className="mb-3 flex items-center justify-between">
+   504→          <h3 className="text-sm font-semibold text-foreground">
+   505→            Komposisi Jenis Kelamin
+   506→          </h3>
+   507→          <button
+   508→            onClick={() => setView("analitik")}
+   509→            className="text-xs text-emerald-600 hover:text-emerald-700 dark:text-emerald-400"
+   510→          >
+   511→            Detail →
+   512→          </button>
+   513→        </div>
+   514→        <div className="flex items-center gap-4">
+   515→          <div className="relative h-32 w-32 shrink-0">
+   516→            <ResponsiveContainer width="100%" height="100%">
+   517→              <PieChart>
+   518→                <Pie
+   519→                  data={genderData}
+   520→                  dataKey="nilai"
+   521→                  nameKey="nama"
+   522→                  cx="50%"
+   523→                  cy="50%"
+   524→                  innerRadius={35}
+   525→                  outerRadius={55}
+   526→                  paddingAngle={2}
+   527→                  strokeWidth={0}
+   528→                >
+   529→                  {genderData.map((entry, i) => (
+   530→                    <Cell key={i} fill={entry.warna} />
+   531→                  ))}
+   532→                </Pie>
+   533→                <Tooltip
+   534→                  contentStyle={{
+   535→                    borderRadius: "8px",
+   536→                    border: "1px solid hsl(var(--border))",
+   537→                    fontSize: "11px",
+   538→                    background: "hsl(var(--popover))",
+   539→                  }}
+   540→                />
+   541→              </PieChart>
+   542→            </ResponsiveContainer>
+   543→            <div className="absolute inset-0 flex flex-col items-center justify-center">
+   544→              <span className="text-xl font-bold text-foreground">{total}</span>
+   545→              <span className="text-[9px] text-muted-foreground">Total</span>
+   546→            </div>
+   547→          </div>
+   548→          <div className="flex-1 space-y-2">
+   549→            {genderData.map((g) => (
+   550→              <div key={g.nama}>
+   551→                <div className="flex items-center justify-between text-xs">
+   552→                  <div className="flex items-center gap-1.5">
+   553→                    <span
+   554→                      className="h-2.5 w-2.5 rounded-full"
+   555→                      style={{ backgroundColor: g.warna }}
+   556→                    />
+   557→                    <span className="font-medium text-foreground">
+   558→                      {g.nama}
+   559→                    </span>
+   560→                  </div>
+   561→                  <span className="font-semibold text-foreground">
+   562→                    {g.nilai} ({Math.round((g.nilai / total) * 100)}%)
+   563→                  </span>
+   564→                </div>
+   565→                <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-muted">
+   566→                  <div
+   567→                    className="h-full rounded-full"
+   568→                    style={{
+   569→                      width: `${(g.nilai / total) * 100}%`,
+   570→                      backgroundColor: g.warna,
+   571→                    }}
+   572→                  />
+   573→                </div>
+   574→              </div>
+   575→            ))}
+   576→          </div>
+   577→        </div>
+   578→      </Card>
+   579→
+   580→      {/* Age distribution */}
+   581→      <Card className="p-5">
+   582→        <div className="mb-3 flex items-center justify-between">
+   583→          <h3 className="text-sm font-semibold text-foreground">
+   584→            Distribusi Kelompok Usia
+   585→          </h3>
+   586→          <button
+   587→            onClick={() => setView("analitik")}
+   588→            className="text-xs text-emerald-600 hover:text-emerald-700 dark:text-emerald-400"
+   589→          >
+   590→            Detail →
+   591→          </button>
+   592→        </div>
+   593→        <div className="space-y-2.5">
+   594→          {ageGroups.map((g) => (
+   595→            <div key={g.label} className="flex items-center gap-3">
+   596→              <span className="w-14 shrink-0 text-xs font-medium text-muted-foreground">
+   597→                {g.label} bln
+   598→              </span>
+   599→              <div className="h-6 flex-1 overflow-hidden rounded-md bg-muted">
+   600→                <div
+   601→                  className="flex h-full items-center justify-end rounded-md bg-gradient-to-r from-emerald-400 to-teal-500 px-2 transition-all"
+   602→                  style={{ width: `${(g.count / maxAgeCount) * 100}%` }}
+   603→                >
+   604→                  <span className="text-[10px] font-bold text-white">
+   605→                    {g.count > 0 ? g.count : ""}
+   606→                  </span>
+   607→                </div>
+   608→              </div>
+   609→            </div>
+   610→          ))}
+   611→        </div>
+   612→      </Card>
+   613→    </div>
+   614→  );
+   615→}
+   616→
+   617→// function UpcomingScheduleWidget() {
+   618→//   const jadwalList = useStore((s) => s.jadwalList);
+   619→//   const setView = useStore((s) => s.setView);
+   620→
+   621→//   const todayStr = new Date().toISOString().slice(0, 10);
+   622→//   const upcoming = useMemo(() => {
+   623→//     return jadwalList
+   624→//       .filter((j) => j.tanggal >= todayStr && j.status === "Terjadwal")
+   625→//       .sort(
+   626→//         (a, b) => new Date(a.tanggal).getTime() - new Date(b.tanggal).getTime(),
+   627→//       )
+   628→//       .slice(0, 4);
+   629→//   }, [jadwalList, todayStr]);
+   630→
+   631→//   const jenisIcon: Record<string, typeof Calendar> = {
+   632→//     "Posyandu Rutin": Calendar,
+   633→//     "Penimbangan Balita": Baby,
+   634→//     "Pemberian Imunisasi": Syringe,
+   635→//     "Pemberian Vitamin A": Droplet,
+   636→//     "Pemberian PMT": Utensils,
+   637→//     "Penyuluhan Gizi": Activity,
+   638→//     "Pemeriksaan Ibu Hamil": HeartPulse,
+   639→//     "Posyandu Balita": Baby,
+   640→//     "Posyandu Lansia": Activity,
+   641→//   };
+   642→
+   643→// return (
+   644→//   <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+   645→{
+   646→  /* Upcoming schedule
+   647→      <Card className="lg:col-span-2">
+   648→        <div className="flex items-center justify-between border-b border-border p-5">
+   649→          <div>
+   650→            <h3 className="flex items-center gap-2 text-base font-semibold text-foreground">
+   651→              <Calendar className="h-5 w-5 text-emerald-600" />
+   652→              Jadwal Posyandu Mendatang
+   653→            </h3>
+   654→            <p className="mt-0.5 text-sm text-muted-foreground">
+   655→              Kegiatan terjadwal dalam waktu dekat
+   656→            </p>
+   657→          </div>
+   658→          <Button variant="ghost" size="sm" onClick={() => setView("jadwal")}>
+   659→            Lihat Semua <ArrowRight className="ml-1 h-4 w-4" />
+   660→          </Button>
+   661→        </div>
+   662→        <div className="p-3">
+   663→          {upcoming.length === 0 ? (
+   664→            <EmptyState
+   665→              icon={Calendar}
+   666→              title="Tidak ada jadwal mendatang"
+   667→              description="Belum ada kegiatan Posyandu yang terjadwal."
+   668→              className="py-6"
+   669→            />
+   670→          ) : (
+   671→            <ul className="space-y-2">
+   672→              {upcoming.map((j) => {
+   673→                const Icon = jenisIcon[j.jenisKegiatan] ?? Calendar;
+   674→                const date = new Date(j.tanggal);
+   675→                const daysUntil = Math.ceil(
+   676→                  (date.getTime() - Date.now()) / (1000 * 60 * 60 * 24),
+   677→                );
+   678→                return (
+   679→                  <li key={j.id}>
+   680→                    <div className="flex items-center gap-3 rounded-lg p-2.5 transition-colors hover:bg-muted/50">
+   681→                      <div className="flex w-12 shrink-0 flex-col items-center rounded-lg bg-emerald-50 py-1.5 dark:bg-emerald-500/10">
+   682→                        <span className="text-[10px] font-medium text-emerald-700 dark:text-emerald-400">
+   683→                          {NAMA_BULAN_SINGKAT[date.getMonth()]}
+   684→                        </span>
+   685→                        <span className="text-lg font-bold text-emerald-700 dark:text-emerald-400">
+   686→                          {date.getDate()}
+   687→                        </span>
+   688→                      </div>
+   689→                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted">
+   690→                        <Icon className="h-4 w-4 text-muted-foreground" />
+   691→                      </div>
+   692→                      <div className="min-w-0 flex-1">
+   693→                        <p className="truncate text-sm font-semibold text-foreground">
+   694→                          {j.judul}
+   695→                        </p>
+   696→                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+   697→                          <span className="flex items-center gap-0.5">
+   698→                            <Clock className="h-3 w-3" />
+   699→                            {j.jamMulai}
+   700→                          </span>
+   701→                          <span className="flex items-center gap-0.5">
+   702→                            <MapPin className="h-3 w-3" />
+   703→                            {j.lokasi}
+   704→                          </span>
+   705→                        </div>
+   706→                      </div>
+   707→                      <div className="shrink-0 text-right">
+   708→                        <span
+   709→                          className={`rounded-full px-2 py-0.5 text-xs font-medium ${daysUntil <= 1 ? "bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-400" : daysUntil <= 3 ? "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400" : "bg-muted text-muted-foreground"}`}
+   710→                        >
+   711→                          {daysUntil === 0
+   712→                            ? "Hari ini"
+   713→                            : daysUntil === 1
+   714→                              ? "Besok"
+   715→                              : `${daysUntil} hari lagi`}
+   716→                        </span>
+   717→                      </div>
+   718→                    </div>
+   719→                  </li>
+   720→                );
+   721→              })}
+   722→            </ul>
+   723→          )}
+   724→        </div>
+   725→      </Card> */
+   726→}
+   727→
+   728→{
+   729→  /* Quick module access
+   730→      <Card className="p-5">
+   731→        <h3 className="mb-4 text-base font-semibold text-foreground">Akses Cepat Modul</h3>
+   732→        <div className="space-y-2">
+   733→          <ModuleLink icon={Syringe} label="Imunisasi" description="Catat & pantau vaksinasi" color="text-violet-600 bg-violet-50 dark:bg-violet-500/10" onClick={() => setView('imunisasi')} />
+   734→          <ModuleLink icon={Droplet} label="Vitamin A" description="Distribusi kapsul Vitamin A" color="text-blue-600 bg-blue-50 dark:bg-blue-500/10" onClick={() => setView('vitamin-a')} />
+   735→          <ModuleLink icon={Utensils} label="PMT" description="Pemberian Makanan Tambahan" color="text-amber-600 bg-amber-50 dark:bg-amber-500/10" onClick={() => setView('pmt')} />
+   736→          <ModuleLink icon={Calendar} label="Jadwal" description="Jadwal kegiatan Posyandu" color="text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10" onClick={() => setView('jadwal')} />
+   737→        </div>
+   738→      </Card> */
+   739→}
+   740→{
+   741→  /* </div>
+   742→  );
+   743→} */
+   744→}
+   745→
+   746→function ModuleLink({
+   747→  icon: Icon,
+   748→  label,
+   749→  description,
+   750→  color,
+   751→  onClick,
+   752→}: {
+   753→  icon: typeof Calendar;
+   754→  label: string;
+   755→  description: string;
+   756→  color: string;
+   757→  onClick: () => void;
+   758→}) {
+   759→  return (
+   760→    <button
+   761→      onClick={onClick}
+   762→      className="group flex w-full items-center gap-3 rounded-lg border border-border p-3 text-left transition-all hover:shadow-md hover:border-primary/30"
+   763→    >
+   764→      <div
+   765→        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${color}`}
+   766→      >
+   767→        <Icon className="h-4 w-4" />
+   768→      </div>
+   769→      <div className="min-w-0 flex-1">
+   770→        <p className="text-sm font-semibold text-foreground">{label}</p>
+   771→        <p className="truncate text-xs text-muted-foreground">{description}</p>
+   772→      </div>
+   773→      <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+   774→    </button>
+   775→  );
+   776→}
+   777→
+   778→function QuickAction({
+   779→  icon: Icon,
+   780→  label,
+   781→  onClick,
+   782→  color,
+   783→}: {
+   784→  icon: typeof Plus;
+   785→  label: string;
+   786→  onClick: () => void;
+   787→  color: "emerald" | "sky" | "amber" | "rose";
+   788→}) {
+   789→  const colors = {
+   790→    emerald:
+   791→      "hover:border-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-500/10",
+   792→    sky: "hover:border-sky-300 hover:bg-sky-50 dark:hover:bg-sky-500/10",
+   793→    amber:
+   794→      "hover:border-amber-300 hover:bg-amber-50 dark:hover:bg-amber-500/10",
+   795→    rose: "hover:border-rose-300 hover:bg-rose-50 dark:hover:bg-rose-500/10",
+   796→  };
+   797→  const iconColors = {
+   798→    emerald: "text-emerald-600 dark:text-emerald-400",
+   799→    sky: "text-sky-600 dark:text-sky-400",
+   800→    amber: "text-amber-600 dark:text-amber-400",
+   801→    rose: "text-rose-600 dark:text-rose-400",
+   802→  };
+   803→  const iconBgs = {
+   804→    emerald: "bg-emerald-100 dark:bg-emerald-500/15",
+   805→    sky: "bg-sky-100 dark:bg-sky-500/15",
+   806→    amber: "bg-amber-100 dark:bg-amber-500/15",
+   807→    rose: "bg-rose-100 dark:bg-rose-500/15",
+   808→  };
+   809→  return (
+   810→    <button
+   811→      type="button"
+   812→      onClick={onClick}
+   813→      className={`group flex flex-col items-center gap-2.5 rounded-xl border border-border bg-card p-4 text-center transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 ${colors[color]}`}
+   814→    >
+   815→      <div
+   816→        className={`flex h-10 w-10 items-center justify-center rounded-lg ${iconBgs[color]} transition-transform duration-300 group-hover:scale-110`}
+   817→      >
+   818→        <Icon className={`h-5 w-5 ${iconColors[color]}`} />
+   819→      </div>
+   820→      <span className="text-xs font-semibold text-foreground">{label}</span>
+   821→    </button>
+   822→  );
+   823→}
+   824→
