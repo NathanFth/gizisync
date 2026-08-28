@@ -7,6 +7,7 @@ import {
   useGiziDistribusi,
   usePriorityAlerts,
   useTrenPengukuranBulanan,
+  // useRekomendasiPMT,
 } from "@/lib/store";
 import { StatCard } from "@/components/shared/stat-card";
 import { AlertStatusBadge } from "@/components/shared/status-badge";
@@ -31,6 +32,8 @@ import {
   Syringe,
   ChevronRight,
   Bell,
+  ClipboardList,
+  CheckCircle2, // FASE 4: Tambahan Icon
 } from "lucide-react";
 import {
   PieChart,
@@ -54,16 +57,17 @@ export function DashboardView() {
   const distribusi = useGiziDistribusi();
   const alerts = usePriorityAlerts();
   const trenBulanan = useTrenPengukuranBulanan();
+  // const rekomendasiPMT = useRekomendasiPMT();
   const { setView, viewBalitaDetail } = useStore();
 
   const totalDistribusi = distribusi.reduce((sum, d) => sum + d.nilai, 0) || 1;
   const giziBaikPersen =
-    distribusi.find((d) => d.nama === "Gizi Baik")?.nilai ?? 0;
+    distribusi.find((d) => d.nama === "Normal")?.nilai ?? 0;
 
   return (
     <div className="space-y-6">
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <StatCard
           icon={Baby}
           label="Total Balita Terdaftar"
@@ -73,22 +77,11 @@ export function DashboardView() {
           iconColor="text-emerald-600"
           iconBg="bg-emerald-50 dark:bg-emerald-500/10"
         />
-        {/* <StatCard
-          icon={HeartPulse}
-          label="Ibu Hamil Terpantau"
-          value={stats.totalIbuHamil}
-          trend={stats.perubahanIbuHamilBulanIni}
-          trendLabel="bulan ini"
-          iconColor="text-rose-600"
-          iconBg="bg-rose-50 dark:bg-rose-500/10"
-        /> */}
         <StatCard
           icon={TrendingUp}
-          label="Persentase Gizi Baik"
+          label="Persentase Gizi Normal"
           value={stats.persentaseGiziBaik}
           unit="%"
-          // Fase 4.10: trend is now real (or null when no comparable data).
-          // StatCard hides the badge automatically when trend === null.
           trend={stats.perubahanPersentaseGiziBaik}
           trendLabel="dari bulan lalu"
           iconColor="text-sky-600"
@@ -96,19 +89,27 @@ export function DashboardView() {
         />
         <StatCard
           icon={AlertTriangle}
-          label="Risiko Stunting"
+          label="Balita Berisiko"
           value={stats.totalRisikoStunting}
           trendLabel="perlu pantauan"
           iconColor="text-amber-600"
           iconBg="bg-amber-50 dark:bg-amber-500/10"
         />
+        {/* <StatCard
+          icon={Utensils}
+          label="Kandidat PMT"
+          value={rekomendasiPMT.length}
+          trendLabel="butuh intervensi"
+          iconColor="text-rose-600"
+          iconBg="bg-rose-50 dark:bg-rose-500/10"
+        />*/}
       </div>
 
       {/* Today's Summary Banner */}
       <TodaysSummary />
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         <QuickAction
           icon={Plus}
           label="Tambah Balita"
@@ -128,9 +129,9 @@ export function DashboardView() {
           color="amber"
         />
         {/* <QuickAction
-          icon={HeartPulse}
-          label="Data Ibu Hamil"
-          onClick={() => setView("ibu-hamil")}
+          icon={Utensils}
+          label="Kelola PMT"
+          onClick={() => setView("pmt")}
           color="rose"
         /> */}
       </div>
@@ -144,7 +145,7 @@ export function DashboardView() {
               Tren Pengukuran 6 Bulan Terakhir
             </h3>
             <p className="mt-0.5 text-sm text-muted-foreground">
-              Jumlah pengukuran dan kasus stunting/wasting per bulan
+              Jumlah pengukuran dan kasus pendek / gizi kurang per bulan
             </p>
           </div>
         </div>
@@ -189,14 +190,14 @@ export function DashboardView() {
             />
             <Bar
               dataKey="stunting"
-              name="Kasus Stunting"
+              name="Kasus Pendek"
               fill="#f59e0b"
               radius={[4, 4, 0, 0]}
               maxBarSize={40}
             />
             <Bar
               dataKey="wasting"
-              name="Kasus Wasting"
+              name="Kasus Gizi Kurang"
               fill="#ef4444"
               radius={[4, 4, 0, 0]}
               maxBarSize={40}
@@ -270,7 +271,7 @@ export function DashboardView() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => viewBalitaDetail(alert.id)}
+                            onClick={() => viewBalitaDetail(String(alert.id))}
                           >
                             Detail
                           </Button>
@@ -332,7 +333,7 @@ export function DashboardView() {
                   {giziBaikPersen}%
                 </span>
                 <span className="text-xs font-medium text-muted-foreground">
-                  Gizi Baik
+                  Normal
                 </span>
               </div>
             </div>
@@ -359,11 +360,104 @@ export function DashboardView() {
         </Card>
       </div>
 
+      {/* FASE 4: WIDGET REKOMENDASI PMT */}
+      {/* <Card className="overflow-hidden border-rose-200 shadow-sm dark:border-rose-900/50">
+        <div className="flex items-center justify-between border-b border-border bg-rose-50/50 p-5 dark:bg-rose-900/10">
+          <div>
+            <h3 className="flex items-center gap-2 text-base font-semibold text-rose-700 dark:text-rose-400">
+              <Utensils className="h-5 w-5" />
+              Kandidat Penerima PMT
+            </h3>
+            <p className="mt-0.5 text-sm text-rose-600/80 dark:text-rose-400/80">
+              Berdasarkan tren 3 bulan terakhir (Berat tidak naik 2x beruntun
+              atau 3x Gizi Kurang)
+            </p>
+          </div> */}
+      {/* <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setView("pmt")}
+            className="border-rose-200 text-rose-700 hover:bg-rose-100 hover:text-rose-800 dark:border-rose-800 dark:text-rose-400 dark:hover:bg-rose-900/50"
+          >
+            Kelola PMT <ArrowRight className="ml-1 h-4 w-4" />
+          </Button>
+        </div>*/}
+      {/* <div className="p-2">
+          {rekomendasiPMT.length === 0 ? (
+            <EmptyState
+              icon={CheckCircle2}
+              title="Tidak ada kandidat PMT baru"
+              description="Bagus! Semua balita dengan tren buruk sudah masuk program PMT atau terpantau normal."
+            />
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border text-left text-xs uppercase tracking-wider text-muted-foreground">
+                    <th className="px-3 py-3 font-medium">Nama Balita</th>
+                    <th className="px-3 py-3 font-medium">Usia</th>
+                    <th className="px-3 py-3 font-medium">BB Terakhir</th>
+                    <th className="px-3 py-3 font-medium">Status Gizi</th>
+                    <th className="px-3 py-3 font-medium">Alasan Terjaring</th>
+                    <th className="px-3 py-3 font-medium text-center">
+                      Prioritas
+                    </th>
+                    <th className="px-3 py-3"></th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {rekomendasiPMT.slice(0, 5).map((rek) => (
+                    <tr
+                      key={rek.id}
+                      className="transition-colors hover:bg-rose-50/30 dark:hover:bg-rose-900/5"
+                    >
+                      <td className="px-3 py-3 font-semibold text-foreground">
+                        {rek.namaBalita}
+                      </td>
+                      <td className="px-3 py-3 text-muted-foreground">
+                        {rek.usiaBulan} bulan
+                      </td>
+                      <td className="px-3 py-3">
+                        <span className="font-mono font-bold text-rose-600 dark:text-rose-400">
+                          {rek.beratSekarang} kg
+                        </span>
+                      </td>
+                      <td className="px-3 py-3 text-muted-foreground">
+                        {rek.statusGiziSekarang}
+                      </td>
+                      <td
+                        className="px-3 py-3 text-muted-foreground max-w-[250px] truncate"
+                        title={rek.alasan}
+                      >
+                        {rek.alasan}
+                      </td>
+                      <td className="px-3 py-3 text-center">
+                        <span
+                          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${rek.prioritas === "Tinggi" ? "bg-red-100 text-red-700 ring-1 ring-inset ring-red-600/20 dark:bg-red-500/15 dark:text-red-400" : "bg-amber-100 text-amber-700 ring-1 ring-inset ring-amber-600/20 dark:bg-amber-500/15 dark:text-amber-400"}`}
+                        >
+                          {rek.prioritas}
+                        </span>
+                      </td>
+                      <td className="px-3 py-3 text-right">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => viewBalitaDetail(String(rek.id))}
+                        >
+                          Detail
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </Card> */}
+
       {/* Demographic Mini Charts */}
       <DemographicMiniCharts />
-
-      {/* Upcoming Schedule + Quick Module Access */}
-      {/* <UpcomingScheduleWidget /> */}
     </div>
   );
 }
@@ -371,7 +465,7 @@ export function DashboardView() {
 // --- Today's Summary Widget ---
 function TodaysSummary() {
   const pengukuranList = useStore((s) => s.pengukuranList);
-  const jadwalList = useStore((s) => s.jadwalList);
+  const balitaList = useStore((s) => s.balitaList);
   const notifikasiList = useStore((s) => s.notifikasiList);
   const setView = useStore((s) => s.setView);
 
@@ -381,10 +475,26 @@ function TodaysSummary() {
   const todayPengukuran = pengukuranList.filter(
     (p) => p.tanggalPengukuran === todayStr,
   );
-  const todayJadwal = jadwalList.filter((j) => j.tanggal === todayStr);
+  const balitaSudahDiukurBulanIni = new Set(
+    pengukuranList
+      .filter((p) => {
+        const d = new Date(p.tanggalPengukuran);
+        return (
+          d.getMonth() === today.getMonth() &&
+          d.getFullYear() === today.getFullYear()
+        );
+      })
+      .map((p) => p.balitaId),
+  );
+  const balitaBelumDiukur = balitaList.filter(
+    (b) => b.status === "Aktif" && !balitaSudahDiukurBulanIni.has(b.id),
+  );
   const unreadNotif = notifikasiList.filter((n) => !n.dibaca).length;
   const todayGiziBermasalah = todayPengukuran.filter(
-    (p) => p.statusGizi !== "Normal" && p.statusGizi !== "Risiko Gizi Lebih",
+    (p) =>
+      p.statusGizi !== "Normal" &&
+      p.statusGizi !== "Risiko Gizi Lebih" &&
+      p.statusGizi !== "Tinggi",
   ).length;
 
   const greeting =
@@ -404,13 +514,12 @@ function TodaysSummary() {
 
   return (
     <Card className="relative overflow-hidden border-emerald-200 bg-gradient-to-br from-emerald-50 via-teal-50 to-emerald-50 p-5 dark:border-emerald-500/20 dark:from-emerald-500/5 dark:via-teal-500/5 dark:to-emerald-500/5">
-      {/* Decorative blob */}
       <div className="pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full bg-emerald-200/30 blur-3xl dark:bg-emerald-500/10" />
 
       <div className="relative flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="min-w-0 flex-1">
           <p className="text-sm font-medium text-emerald-700 dark:text-emerald-400">
-            {greeting}, Kader! 👋
+            {greeting}, Kader!  
           </p>
           <h3 className="mt-0.5 text-lg font-bold text-foreground">
             {todayLabel}
@@ -426,32 +535,33 @@ function TodaysSummary() {
                 {todayGiziBermasalah} perlu perhatian
               </span>
             )}
-            {todayJadwal.length > 0 && (
+            {balitaBelumDiukur.length > 0 && (
               <span className="flex items-center gap-1 text-sky-600 dark:text-sky-400">
-                <Calendar className="h-3.5 w-3.5" />
-                {todayJadwal.length} kegiatan terjadwal
+                <ClipboardList className="h-3.5 w-3.5" />
+                {balitaBelumDiukur.length} balita belum diukur bulan ini
               </span>
             )}
-            {unreadNotif > 0 && (
+            {/* {unreadNotif > 0 && (
               <span className="flex items-center gap-1 text-rose-600 dark:text-rose-400">
                 <Bell className="h-3.5 w-3.5" />
                 {unreadNotif} notifikasi belum dibaca
               </span>
-            )}
+            )} */}
           </div>
         </div>
 
-        {todayJadwal.length > 0 ? (
+        {balitaBelumDiukur.length > 0 ? (
           <div className="rounded-xl border border-emerald-200 bg-card/80 p-3 backdrop-blur-sm dark:border-emerald-500/20">
             <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">
-              📌 Kegiatan Hari Ini
+              📋 Perlu Diukur Bulan Ini
             </p>
             <p className="mt-0.5 text-sm font-semibold text-foreground">
-              {todayJadwal[0].judul}
+              {balitaBelumDiukur[0].namaLengkap}
+              {balitaBelumDiukur.length > 1 &&
+                ` +${balitaBelumDiukur.length - 1} lainnya`}
             </p>
             <p className="text-xs text-muted-foreground">
-              {todayJadwal[0].jamMulai} - {todayJadwal[0].jamSelesai} ·{" "}
-              {todayJadwal[0].lokasi}
+              Belum ada pengukuran tercatat bulan ini
             </p>
           </div>
         ) : (
@@ -471,7 +581,6 @@ function TodaysSummary() {
 // --- Demographic Mini Charts ---
 function DemographicMiniCharts() {
   const balitaList = useStore((s) => s.balitaList);
-  const setView = useStore((s) => s.setView);
 
   const laki = balitaList.filter((b) => b.jenisKelamin === "Laki-laki").length;
   const perempuan = balitaList.filter(
@@ -500,19 +609,10 @@ function DemographicMiniCharts() {
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-      {/* Gender distribution */}
       <Card className="p-5">
-        <div className="mb-3 flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-foreground">
-            Komposisi Jenis Kelamin
-          </h3>
-          <button
-            onClick={() => setView("analitik")}
-            className="text-xs text-emerald-600 hover:text-emerald-700 dark:text-emerald-400"
-          >
-            Detail →
-          </button>
-        </div>
+        <h3 className="mb-3 text-sm font-semibold text-foreground">
+          Komposisi Jenis Kelamin
+        </h3>
         <div className="flex items-center gap-4">
           <div className="relative h-32 w-32 shrink-0">
             <ResponsiveContainer width="100%" height="100%">
@@ -579,19 +679,10 @@ function DemographicMiniCharts() {
         </div>
       </Card>
 
-      {/* Age distribution */}
       <Card className="p-5">
-        <div className="mb-3 flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-foreground">
-            Distribusi Kelompok Usia
-          </h3>
-          <button
-            onClick={() => setView("analitik")}
-            className="text-xs text-emerald-600 hover:text-emerald-700 dark:text-emerald-400"
-          >
-            Detail →
-          </button>
-        </div>
+        <h3 className="mb-3 text-sm font-semibold text-foreground">
+          Distribusi Kelompok Usia
+        </h3>
         <div className="space-y-2.5">
           {ageGroups.map((g) => (
             <div key={g.label} className="flex items-center gap-3">
@@ -613,167 +704,6 @@ function DemographicMiniCharts() {
         </div>
       </Card>
     </div>
-  );
-}
-
-// function UpcomingScheduleWidget() {
-//   const jadwalList = useStore((s) => s.jadwalList);
-//   const setView = useStore((s) => s.setView);
-
-//   const todayStr = new Date().toISOString().slice(0, 10);
-//   const upcoming = useMemo(() => {
-//     return jadwalList
-//       .filter((j) => j.tanggal >= todayStr && j.status === "Terjadwal")
-//       .sort(
-//         (a, b) => new Date(a.tanggal).getTime() - new Date(b.tanggal).getTime(),
-//       )
-//       .slice(0, 4);
-//   }, [jadwalList, todayStr]);
-
-//   const jenisIcon: Record<string, typeof Calendar> = {
-//     "Posyandu Rutin": Calendar,
-//     "Penimbangan Balita": Baby,
-//     "Pemberian Imunisasi": Syringe,
-//     "Pemberian Vitamin A": Droplet,
-//     "Pemberian PMT": Utensils,
-//     "Penyuluhan Gizi": Activity,
-//     "Pemeriksaan Ibu Hamil": HeartPulse,
-//     "Posyandu Balita": Baby,
-//     "Posyandu Lansia": Activity,
-//   };
-
-// return (
-//   <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-{
-  /* Upcoming schedule
-      <Card className="lg:col-span-2">
-        <div className="flex items-center justify-between border-b border-border p-5">
-          <div>
-            <h3 className="flex items-center gap-2 text-base font-semibold text-foreground">
-              <Calendar className="h-5 w-5 text-emerald-600" />
-              Jadwal Posyandu Mendatang
-            </h3>
-            <p className="mt-0.5 text-sm text-muted-foreground">
-              Kegiatan terjadwal dalam waktu dekat
-            </p>
-          </div>
-          <Button variant="ghost" size="sm" onClick={() => setView("jadwal")}>
-            Lihat Semua <ArrowRight className="ml-1 h-4 w-4" />
-          </Button>
-        </div>
-        <div className="p-3">
-          {upcoming.length === 0 ? (
-            <EmptyState
-              icon={Calendar}
-              title="Tidak ada jadwal mendatang"
-              description="Belum ada kegiatan Posyandu yang terjadwal."
-              className="py-6"
-            />
-          ) : (
-            <ul className="space-y-2">
-              {upcoming.map((j) => {
-                const Icon = jenisIcon[j.jenisKegiatan] ?? Calendar;
-                const date = new Date(j.tanggal);
-                const daysUntil = Math.ceil(
-                  (date.getTime() - Date.now()) / (1000 * 60 * 60 * 24),
-                );
-                return (
-                  <li key={j.id}>
-                    <div className="flex items-center gap-3 rounded-lg p-2.5 transition-colors hover:bg-muted/50">
-                      <div className="flex w-12 shrink-0 flex-col items-center rounded-lg bg-emerald-50 py-1.5 dark:bg-emerald-500/10">
-                        <span className="text-[10px] font-medium text-emerald-700 dark:text-emerald-400">
-                          {NAMA_BULAN_SINGKAT[date.getMonth()]}
-                        </span>
-                        <span className="text-lg font-bold text-emerald-700 dark:text-emerald-400">
-                          {date.getDate()}
-                        </span>
-                      </div>
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted">
-                        <Icon className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-semibold text-foreground">
-                          {j.judul}
-                        </p>
-                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                          <span className="flex items-center gap-0.5">
-                            <Clock className="h-3 w-3" />
-                            {j.jamMulai}
-                          </span>
-                          <span className="flex items-center gap-0.5">
-                            <MapPin className="h-3 w-3" />
-                            {j.lokasi}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="shrink-0 text-right">
-                        <span
-                          className={`rounded-full px-2 py-0.5 text-xs font-medium ${daysUntil <= 1 ? "bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-400" : daysUntil <= 3 ? "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400" : "bg-muted text-muted-foreground"}`}
-                        >
-                          {daysUntil === 0
-                            ? "Hari ini"
-                            : daysUntil === 1
-                              ? "Besok"
-                              : `${daysUntil} hari lagi`}
-                        </span>
-                      </div>
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </div>
-      </Card> */
-}
-
-{
-  /* Quick module access
-      <Card className="p-5">
-        <h3 className="mb-4 text-base font-semibold text-foreground">Akses Cepat Modul</h3>
-        <div className="space-y-2">
-          <ModuleLink icon={Syringe} label="Imunisasi" description="Catat & pantau vaksinasi" color="text-violet-600 bg-violet-50 dark:bg-violet-500/10" onClick={() => setView('imunisasi')} />
-          <ModuleLink icon={Droplet} label="Vitamin A" description="Distribusi kapsul Vitamin A" color="text-blue-600 bg-blue-50 dark:bg-blue-500/10" onClick={() => setView('vitamin-a')} />
-          <ModuleLink icon={Utensils} label="PMT" description="Pemberian Makanan Tambahan" color="text-amber-600 bg-amber-50 dark:bg-amber-500/10" onClick={() => setView('pmt')} />
-          <ModuleLink icon={Calendar} label="Jadwal" description="Jadwal kegiatan Posyandu" color="text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10" onClick={() => setView('jadwal')} />
-        </div>
-      </Card> */
-}
-{
-  /* </div>
-  );
-} */
-}
-
-function ModuleLink({
-  icon: Icon,
-  label,
-  description,
-  color,
-  onClick,
-}: {
-  icon: typeof Calendar;
-  label: string;
-  description: string;
-  color: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className="group flex w-full items-center gap-3 rounded-lg border border-border p-3 text-left transition-all hover:shadow-md hover:border-primary/30"
-    >
-      <div
-        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${color}`}
-      >
-        <Icon className="h-4 w-4" />
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold text-foreground">{label}</p>
-        <p className="truncate text-xs text-muted-foreground">{description}</p>
-      </div>
-      <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
-    </button>
   );
 }
 

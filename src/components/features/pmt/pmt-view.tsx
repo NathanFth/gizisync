@@ -50,7 +50,8 @@ export function PMTView() {
   const handleComplete = (p: PMTRecord) => {
     const beratAkhir = prompt(`Masukkan berat badan akhir ${p.namaBalita} (kg):`, String(p.beratAwalKg + 0.5));
     if (beratAkhir && !isNaN(parseFloat(beratAkhir))) {
-      updatePMT(p.id, {
+      // FIX: Paksa p.id menjadi Number agar TypeScript tidak rewel
+      updatePMT(Number(p.id), {
         status: 'Selesai',
         beratAkhirKg: parseFloat(beratAkhir),
         tanggalSelesai: new Date().toISOString().slice(0, 10),
@@ -63,7 +64,8 @@ export function PMTView() {
 
   const confirmDelete = () => {
     if (deleteTarget) {
-      deletePMT(deleteTarget.id);
+      // FIX: Paksa deleteTarget.id menjadi Number
+      deletePMT(Number(deleteTarget.id));
       toast.success('Record PMT dihapus');
       setDeleteTarget(null);
     }
@@ -99,7 +101,7 @@ export function PMTView() {
         <StatCard icon={Utensils} label="Total Program" value={stats.total} trendLabel="record" iconColor="text-amber-600" iconBg="bg-amber-50 dark:bg-amber-500/10" />
       </div>
 
-      {/* Info banner */}
+      {/* Info banner - FASE 2: Terminologi dihaluskan */}
       <Card className="border-amber-200 bg-amber-50/50 p-4 dark:border-amber-500/20 dark:bg-amber-500/5">
         <div className="flex items-start gap-3">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-500/15">
@@ -108,7 +110,7 @@ export function PMTView() {
           <div className="text-sm">
             <p className="font-semibold text-foreground">Program Pemberian Makanan Tambahan (PMT)</p>
             <p className="mt-0.5 text-muted-foreground">
-              PMT diberikan kepada balita dengan status <strong>Stunting</strong>, <strong>Wasting</strong>, atau <strong>Underweight</strong> untuk meningkatkan status gizi. Program biasanya berlangsung 30-60 hari dengan monitoring berat badan berkala.
+              PMT diberikan kepada balita dengan status <strong>Pendek</strong>, <strong>Gizi Buruk</strong>, atau <strong>BB Kurang</strong> untuk meningkatkan status gizi. Program biasanya berlangsung 30-60 hari dengan monitoring berat badan berkala.
             </p>
           </div>
         </div>
@@ -182,9 +184,10 @@ export function PMTView() {
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">{p.jenisPMT}</td>
                       <td className="px-4 py-3">
+                        {/* FASE 2: Ganti pewarnaan badge alasan PMT */}
                         <span className={`inline-flex h-6 items-center rounded-md px-2 text-xs font-medium ${
-                          p.alasan === 'Stunting' ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400' :
-                          p.alasan === 'Wasting' ? 'bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-400' :
+                          p.alasan === 'Pendek' ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400' :
+                          p.alasan === 'Gizi Buruk' ? 'bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-400' :
                           'bg-orange-100 text-orange-700 dark:bg-orange-500/15 dark:text-orange-400'
                         }`}>
                           {p.alasan}
@@ -290,7 +293,7 @@ function PMTFormModal({
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  balitaList: { id: number; namaLengkap: string; usiaBulan: number; jenisKelamin: string }[];
+  balitaList: { id: number | string; namaLengkap: string; usiaBulan: number; jenisKelamin: string | null }[];
   onSave: (data: Omit<PMTRecord, 'id'>) => void;
 }) {
   const [balitaId, setBalitaId] = useState<string>('');
@@ -298,7 +301,10 @@ function PMTFormModal({
   const [tanggalMulai, setTanggalMulai] = useState(new Date().toISOString().slice(0, 10));
   const [jumlahHari, setJumlahHari] = useState('30');
   const [beratAwal, setBeratAwal] = useState('');
-  const [alasan, setAlasan] = useState<PMTRecord['alasan']>('Stunting');
+  
+  // FASE 2: Default dropdown reason
+  const [alasan, setAlasan] = useState<PMTRecord['alasan']>('Pendek'); 
+  
   const [petugas, setPetugas] = useState('Bidan Rina');
   const [catatan, setCatatan] = useState('');
 
@@ -309,7 +315,7 @@ function PMTFormModal({
       return;
     }
     const id = parseInt(balitaId);
-    const namaBalita = balitaList.find((b) => b.id === id)?.namaLengkap ?? '';
+    const namaBalita = balitaList.find((b) => String(b.id) === String(id))?.namaLengkap ?? '';
     onSave({
       balitaId: id,
       namaBalita,
@@ -368,10 +374,11 @@ function PMTFormModal({
               <Select value={alasan} onValueChange={(v) => setAlasan(v as PMTRecord['alasan'])}>
                 <SelectTrigger id="pmt-alasan"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Stunting">Stunting</SelectItem>
-                  <SelectItem value="Wasting">Wasting</SelectItem>
-                  <SelectItem value="Underweight">Underweight</SelectItem>
+                  {/* FASE 2: Pembaruan Opsi Dropdown */}
+                  <SelectItem value="Pendek">Pendek</SelectItem>
+                  <SelectItem value="Gizi Buruk">Gizi Buruk</SelectItem>
                   <SelectItem value="Gizi Kurang">Gizi Kurang</SelectItem>
+                  <SelectItem value="BB Kurang">BB Kurang</SelectItem>
                   <SelectItem value="Risiko KEK">Risiko KEK</SelectItem>
                 </SelectContent>
               </Select>

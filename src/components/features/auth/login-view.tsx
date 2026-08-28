@@ -1,37 +1,83 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useStore } from '@/lib/store';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Eye, EyeOff, Heart, Lock, User, ShieldCheck, Activity, TrendingUp } from 'lucide-react';
-import { toast } from 'sonner';
+import { useState } from "react";
+import { useStore } from "@/lib/store";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Eye,
+  EyeOff,
+  Heart,
+  Lock,
+  User,
+  Baby,
+  FileBarChart,
+  Activity,
+  TrendingUp,
+} from "lucide-react";
+import { toast } from "sonner";
+import { createClient } from "@/lib/supabase/client";
 
 export function LoginView() {
-  const login = useStore((s) => s.login);
-  const [username, setUsername] = useState('admin.rw06');
-  const [password, setPassword] = useState('posyandu123');
+  const setUser = useStore((s) => s.setUser);
+  // Default kosong agar kader mengisi sendiri email aslinya
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!username || !password) {
-      toast.error('Mohon isi username dan password');
+    if (!email || !password) {
+      toast.error("Mohon isi email dan kata sandi");
       return;
     }
+
     setLoading(true);
-    // Simulate auth delay
-    setTimeout(() => {
-      const ok = login(username, password);
-      if (ok) {
-        toast.success('Selamat datang kembali!', { description: 'Login berhasil' });
-      } else {
-        toast.error('Login gagal', { description: 'Periksa kembali kredensial Anda' });
+    const supabase = createClient();
+
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: password,
+      });
+
+      if (error) {
+        toast.error("Login gagal", {
+          description:
+            error.message === "Invalid login credentials"
+              ? "Email atau kata sandi salah."
+              : error.message,
+        });
+        setLoading(false);
+        return;
       }
+
+      if (data.user) {
+        toast.success("Selamat datang kembali!", {
+          description: "Login berhasil",
+        });
+
+        // Simpan sesi ke Zustand agar UI langsung ter-update (Nama kader muncul)
+        setUser({
+          username: data.user.email!,
+          namaLengkap:
+            data.user.user_metadata?.nama_lengkap ||
+            data.user.email!.split("@")[0],
+          peran: "Kader Posyandu",
+          loginAt: new Date().toISOString(),
+        });
+
+        // Redirect ke dashboard secara hard-reload agar middleware membaca cookie baru
+        window.location.href = "/";
+      }
+    } catch (err) {
+      toast.error("Terjadi kesalahan sistem", {
+        description: "Tidak dapat terhubung ke server.",
+      });
       setLoading(false);
-    }, 600);
+    }
   };
 
   return (
@@ -50,7 +96,9 @@ export function LoginView() {
           </div>
           <div>
             <h1 className="text-xl font-bold tracking-tight">GiziSync</h1>
-            <p className="text-xs text-emerald-100">Sistem Informasi Posyandu</p>
+            <p className="text-xs text-emerald-100">
+              Sistem Informasi Posyandu
+            </p>
           </div>
         </div>
 
@@ -60,15 +108,33 @@ export function LoginView() {
             Manajemen Data Gizi Posyandu jadi Lebih Mudah
           </h2>
           <p className="mt-4 text-emerald-50">
-            Pantau tumbuh kembang balita, deteksi dini stunting dengan standar WHO, dan kelola data ibu hamil dalam satu platform terintegrasi.
+            Pantau tumbuh kembang balita, deteksi dini stunting dengan standar
+            WHO, dan kelola laporan bulanan Posyandu dalam satu platform
+            terintegrasi.
           </p>
 
           {/* Feature pills */}
           <div className="mt-8 grid grid-cols-2 gap-3">
-            <FeaturePill icon={Activity} title="Z-Score WHO" desc="Perhitungan LMS akurat" />
-            <FeaturePill icon={TrendingUp} title="Growth Tracking" desc="Grafik pertumbuhan" />
-            <FeaturePill icon={ShieldCheck} title="Imunisasi" desc="Jadwal PD3I" />
-            <FeaturePill icon={Heart} title="Ibu Hamil" desc="Deteksi KEK" />
+            <FeaturePill
+              icon={Activity}
+              title="Z-Score WHO"
+              desc="Perhitungan LMS akurat"
+            />
+            <FeaturePill
+              icon={TrendingUp}
+              title="Growth Tracking"
+              desc="Grafik pertumbuhan"
+            />
+            <FeaturePill
+              icon={Baby}
+              title="Register Balita"
+              desc="Data balita real-time"
+            />
+            <FeaturePill
+              icon={FileBarChart}
+              title="Laporan Bulanan"
+              desc="Ekspor PDF & Excel"
+            />
           </div>
         </div>
 
@@ -88,13 +154,19 @@ export function LoginView() {
               <Heart className="h-6 w-6 text-white" fill="white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold tracking-tight text-foreground">GiziSync</h1>
-              <p className="text-xs text-muted-foreground">Sistem Informasi Posyandu</p>
+              <h1 className="text-xl font-bold tracking-tight text-foreground">
+                GiziSync
+              </h1>
+              <p className="text-xs text-muted-foreground">
+                Sistem Informasi Posyandu
+              </p>
             </div>
           </div>
 
           <div className="mb-8">
-            <h2 className="text-2xl font-bold tracking-tight text-foreground">Masuk ke Akun</h2>
+            <h2 className="text-2xl font-bold tracking-tight text-foreground">
+              Masuk ke Akun
+            </h2>
             <p className="mt-1.5 text-sm text-muted-foreground">
               Selamat datang kembali. Silakan masuk untuk melanjutkan.
             </p>
@@ -102,17 +174,17 @@ export function LoginView() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-1.5">
-              <Label htmlFor="username">Username</Label>
+              <Label htmlFor="email">Email Kader</Label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  id="username"
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="admin.rw06"
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="contoh: siti@gizisync.com"
                   className="pl-9"
-                  autoComplete="username"
+                  autoComplete="email"
                 />
               </div>
             </div>
@@ -120,15 +192,12 @@ export function LoginView() {
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">Kata Sandi</Label>
-                <button type="button" className="text-xs font-medium text-emerald-600 hover:text-emerald-700 dark:text-emerald-400">
-                  Lupa kata sandi?
-                </button>
               </div>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   id="password"
-                  type={showPassword ? 'text' : 'password'}
+                  type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
@@ -139,22 +208,23 @@ export function LoginView() {
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
-                  aria-label={showPassword ? 'Sembunyikan sandi' : 'Tampilkan sandi'}
+                  aria-label={
+                    showPassword ? "Sembunyikan sandi" : "Tampilkan sandi"
+                  }
                 >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
                 </button>
               </div>
             </div>
 
-            <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer">
-              <input type="checkbox" defaultChecked className="h-4 w-4 rounded border-input text-emerald-600 focus:ring-emerald-500/20" />
-              Ingat saya selama 30 hari
-            </label>
-
             <Button
               type="submit"
               disabled={loading}
-              className="w-full bg-emerald-600 py-2.5 text-sm font-semibold hover:bg-emerald-700 disabled:opacity-60"
+              className="mt-2 w-full bg-emerald-600 py-2.5 text-sm font-semibold hover:bg-emerald-700 disabled:opacity-60"
             >
               {loading ? (
                 <span className="flex items-center gap-2">
@@ -162,23 +232,13 @@ export function LoginView() {
                   Memproses...
                 </span>
               ) : (
-                'Masuk'
+                "Masuk"
               )}
             </Button>
           </form>
 
-          {/* Demo credentials hint */}
-          <div className="mt-6 rounded-lg border border-dashed border-border bg-muted/30 p-3.5">
-            <p className="text-xs font-medium text-muted-foreground">Demo kredensial:</p>
-            <p className="mt-1 font-mono text-xs text-foreground">
-              Username: <span className="font-semibold text-emerald-600 dark:text-emerald-400">admin.rw06</span>
-              {' · '}
-              Password: <span className="font-semibold text-emerald-600 dark:text-emerald-400">posyandu123</span>
-            </p>
-          </div>
-
-          <p className="mt-6 text-center text-xs text-muted-foreground">
-            Dengan masuk, Anda menyetujui Syarat & Ketentuan dan Kebijakan Privasi GiziSync.
+          <p className="mt-8 text-center text-xs text-muted-foreground">
+            Sistem Informasi GiziSync dilindungi oleh enkripsi Supabase Auth.
           </p>
         </div>
       </div>
@@ -186,7 +246,15 @@ export function LoginView() {
   );
 }
 
-function FeaturePill({ icon: Icon, title, desc }: { icon: typeof Heart; title: string; desc: string }) {
+function FeaturePill({
+  icon: Icon,
+  title,
+  desc,
+}: {
+  icon: typeof Heart;
+  title: string;
+  desc: string;
+}) {
   return (
     <div className="flex items-center gap-2.5 rounded-xl bg-white/10 p-3 backdrop-blur-sm">
       <Icon className="h-5 w-5 shrink-0 text-emerald-100" />

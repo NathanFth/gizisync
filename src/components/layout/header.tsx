@@ -1,25 +1,43 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useStore, useUnreadNotifikasiCount } from '@/lib/store';
-import { NotificationsPanel } from '@/components/layout/notifications-dropdown';
-import { ShortcutsHelpModal } from '@/components/layout/shortcuts-help';
-import { Menu, Sun, Moon, Bell, Search, Command, Keyboard } from 'lucide-react';
+import { useState } from "react";
+import { useStore, useUnreadNotifikasiCount } from "@/lib/store";
+import { NotificationsPanel } from "@/components/layout/notifications-dropdown";
+import { ShortcutsHelpModal } from "@/components/layout/shortcuts-help";
+import { Menu, Sun, Moon, Bell, Search, Command, Keyboard } from "lucide-react";
 
 const viewTitles: Record<string, { title: string; subtitle: string }> = {
-  dashboard: { title: 'Dashboard', subtitle: 'Ringkasan data Posyandu hari ini' },
-  balita: { title: 'Buku Register Balita', subtitle: 'Daftar balita terdaftar di Posyandu' },
-  'balita-detail': { title: 'Detail Anak', subtitle: 'Profil dan riwayat pengukuran balita' },
-  kalkulator: { title: 'Kalkulator Z-Score', subtitle: 'Hitung status gizi berdasarkan standar WHO' },
+  dashboard: {
+    title: "Dashboard",
+    subtitle: "Ringkasan data Posyandu hari ini",
+  },
+  balita: {
+    title: "Buku Data Balita",
+    subtitle: "Daftar balita terdaftar di Posyandu",
+  },
+  "balita-detail": {
+    title: "Detail Anak",
+    subtitle: "Profil dan riwayat pengukuran balita",
+  },
+  kalkulator: {
+    title: "Pengukuran Z-Score",
+    subtitle: "Hitung status gizi berdasarkan standar WHO",
+  },
   // 'ibu-hamil': { title: 'Data Ibu Hamil', subtitle: 'Pemantauan ibu hamil dan risiko KEK' },
   // 'ibu-hamil-detail': { title: 'Detail Ibu Hamil', subtitle: 'Riwayat ANC dan pemantauan kehamilan' },
   // imunisasi: { title: 'Imunisasi', subtitle: 'Pencatatan dan jadwal imunisasi balita' },
   // 'vitamin-a': { title: 'Vitamin A', subtitle: 'Pencatatan distribusi kapsul Vitamin A' },
   // pmt: { title: 'PMT', subtitle: 'Pemberian Makanan Tambahan untuk balita gizi kurang' },
   // jadwal: { title: 'Jadwal Posyandu', subtitle: 'Jadwal kegiatan Posyandu mendatang' },
-  laporan: { title: 'Laporan Bulanan', subtitle: 'Rekapitulasi pemeriksaan bulanan Posyandu' },
+  laporan: {
+    title: "Laporan Bulanan",
+    subtitle: "Rekapitulasi pemeriksaan bulanan Posyandu",
+  },
   // analitik: { title: 'Analitik', subtitle: 'Analisis data dan insight Posyandu' },
-  pengaturan: { title: 'Pengaturan Akun', subtitle: 'Kelola profil dan data Posyandu' },
+  // pengaturan: {
+  //   title: "Pengaturan Akun",
+  //   subtitle: "Kelola profil dan data Posyandu",
+  // },
 };
 
 export function Header() {
@@ -33,13 +51,13 @@ export function Header() {
   const [notifOpen, setNotifOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
 
-  const config = viewTitles[view] ?? { title: 'GiziSync', subtitle: '' };
+  const config = viewTitles[view] ?? { title: "GiziSync", subtitle: "" };
 
-  const today = new Date().toLocaleDateString('id-ID', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
+  const today = new Date().toLocaleDateString("id-ID", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
   });
 
   return (
@@ -54,13 +72,17 @@ export function Header() {
           <Menu className="h-5 w-5" />
         </button>
         <div>
-          <h2 className="text-base font-bold tracking-tight text-foreground sm:text-lg">{config.title}</h2>
-          <p className="hidden text-xs text-muted-foreground sm:block">{config.subtitle}</p>
+          <h2 className="text-base font-bold tracking-tight text-foreground sm:text-lg">
+            {config.title}
+          </h2>
+          <p className="hidden text-xs text-muted-foreground sm:block">
+            {config.subtitle}
+          </p>
         </div>
       </div>
 
       <div className="flex items-center gap-2 sm:gap-3">
-        {/* Command palette trigger */}
+        {/* Command palette trigger
         <button
           type="button"
           onClick={() => setCommandPaletteOpen(true)}
@@ -72,9 +94,11 @@ export function Header() {
           <kbd className="hidden items-center gap-0.5 rounded border border-border bg-background px-1.5 py-0.5 text-[10px] font-medium sm:flex">
             <Command className="h-2.5 w-2.5" />K
           </kbd>
-        </button>
+        </button> */}
 
-        <p className="hidden text-xs font-medium text-muted-foreground xl:block">{today}</p>
+        <p className="hidden text-xs font-medium text-muted-foreground xl:block">
+          {today}
+        </p>
 
         <button
           type="button"
@@ -82,10 +106,14 @@ export function Header() {
           className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
           aria-label="Ganti tema"
         >
-          {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+          {theme === "light" ? (
+            <Moon className="h-5 w-5" />
+          ) : (
+            <Sun className="h-5 w-5" />
+          )}
         </button>
 
-        <button
+        {/* <button
           type="button"
           onClick={() => setShortcutsOpen(true)}
           className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
@@ -93,9 +121,9 @@ export function Header() {
           title="Pintasan keyboard (?)"
         >
           <Keyboard className="h-5 w-5" />
-        </button>
+        </button> */}
 
-        <button
+        {/* <button
           type="button"
           onClick={() => setNotifOpen(!notifOpen)}
           className="relative rounded-lg p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
@@ -107,15 +135,21 @@ export function Header() {
               {unreadCount > 9 ? '9+' : unreadCount}
             </span>
           )}
-        </button>
+        </button> */}
 
-        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 text-sm font-bold text-white">
+        {/* <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 text-sm font-bold text-white">
           {namaLengkap.charAt(0)}
-        </div>
+        </div> */}
       </div>
 
-      <NotificationsPanel open={notifOpen} onClose={() => setNotifOpen(false)} />
-      <ShortcutsHelpModal open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
+      <NotificationsPanel
+        open={notifOpen}
+        onClose={() => setNotifOpen(false)}
+      />
+      <ShortcutsHelpModal
+        open={shortcutsOpen}
+        onOpenChange={setShortcutsOpen}
+      />
     </header>
   );
 }

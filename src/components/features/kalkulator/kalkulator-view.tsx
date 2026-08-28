@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { GiziStatusBadge } from '@/components/shared/status-badge';
 import { Calculator, Baby, TrendingUp, AlertCircle, CheckCircle2, Save, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
-import type { JenisKelamin, IndikatorZScore } from '@/lib/data/types';
+import type { JenisKelamin, IndikatorZScore, StatusGizi } from '@/lib/data/types';
 
 interface HasilIndikator {
   zScore: number;
@@ -45,9 +45,8 @@ export function KalkulatorView() {
     }
     const b = balitaList.find((x) => x.id === Number(id));
     if (b) {
-      setJenisKelamin(b.jenisKelamin);
+      setJenisKelamin(b.jenisKelamin as JenisKelamin);
       setUmurBulan(String(b.usiaBulan));
-      // Prefill with latest measurement if available
       toast.info(`Data ${b.namaLengkap} dimuat`, {
         description: `Silakan isi berat & tinggi badan hasil pengukuran`,
       });
@@ -78,7 +77,6 @@ export function KalkulatorView() {
 
     if (isNaN(zBBU) || isNaN(zTBU) || isNaN(zBBTB)) {
       toast.error('Nilai pengukuran di luar rentang WHO', {
-        // Fase 1.3: WFH now covers 45-120 cm (was 45-90).
         description: 'Pastikan tinggi badan 45-120 cm dan usia 0-60 bulan',
       });
       return;
@@ -104,7 +102,7 @@ export function KalkulatorView() {
       usiaBulan: parseInt(umurBulan),
       beratBadanKg: parseFloat(beratBadan),
       tinggiBadanCm: parseFloat(tinggiBadan),
-    });
+    } as any);
     toast.success('Pengukuran disimpan', {
       description: `${selectedBalita.namaLengkap} — BB ${beratBadan}kg, TB ${tinggiBadan}cm`,
     });
@@ -272,7 +270,8 @@ export function KalkulatorView() {
               </div>
               <div className="mt-4 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 p-3">
                 <p className="text-xs text-emerald-800 dark:text-emerald-300">
-                  <strong>Catatan:</strong> Perhitungan menggunakan tabel LMS (Lambda-Mu-Sigma) resmi WHO Child Growth Standards 2006. Stunting dideteksi dari TB/U, wasting dari BB/TB, dan underweight dari BB/U.
+                  {/* FASE 2: Penghalusan Terminologi di Catatan */}
+                  <strong>Catatan:</strong> Perhitungan menggunakan tabel LMS (Lambda-Mu-Sigma) resmi WHO Child Growth Standards 2006. Kasus Balita Pendek dideteksi dari TB/U, Gizi Kurang/Buruk dari BB/TB, dan BB Kurang dari BB/U.
                 </p>
               </div>
             </Card>
@@ -312,7 +311,8 @@ function ResultCard({ title, subtitle, hasil }: { title: string; subtitle: strin
         <p className="text-[10px] text-muted-foreground">Z-Score (SD)</p>
       </div>
       <div className="space-y-1">
-        <GiziStatusBadge status={hasil.status.status} />
+        {/* Type assertion untuk menyesuaikan dengan StatusGizi enum yang baru */}
+        <GiziStatusBadge status={hasil.status.status as StatusGizi} />
         <p className="text-xs text-muted-foreground leading-tight">{hasil.status.label}</p>
       </div>
     </Card>

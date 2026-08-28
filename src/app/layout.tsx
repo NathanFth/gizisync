@@ -15,9 +15,18 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "GiziSync — Sistem Informasi Posyandu",
-  description: "Dashboard SaaS untuk manajemen data gizi balita dan ibu hamil di Posyandu. Perhitungan Z-Score berstandar WHO.",
-  keywords: ["Posyandu", "Gizi", "Z-Score", "WHO", "Stunting", "Balita", "Ibu Hamil", "Kesehatan"],
+  title: "GiziSync — Sistem Informasi Manajemen Gizi Posyandu",
+  description:
+    "Sistem Informasi Manajemen Gizi, Posyandu, dan Deteksi Dini Stunting Balita — dilengkapi kalkulator Z-Score berstandar WHO, Buku Register Balita digital, dan laporan bulanan otomatis.",
+  keywords: [
+    "Posyandu",
+    "Gizi Balita",
+    "Stunting",
+    "Z-Score WHO",
+    "KMS",
+    "Kesehatan Anak",
+    "Buku Register Balita",
+  ],
   authors: [{ name: "GiziSync Team" }],
   icons: {
     icon: "/logo.svg",

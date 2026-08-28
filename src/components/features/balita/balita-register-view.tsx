@@ -1,52 +1,76 @@
-'use client';
+"use client";
 
-import { useState, useMemo } from 'react';
-import { useStore } from '@/lib/store';
-import { BalitaFormModal } from './balita-form-modal';
-import { PengukuranFormModal } from './pengukuran-form-modal';
-import { SearchBar, EmptyState } from '@/components/shared/empty-state';
-import { Pagination } from '@/components/shared/pagination';
-import { ConfirmDialog } from '@/components/shared/confirm-dialog';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Eye, Pencil, Trash2, Scale, Users, Filter, X, ChevronDown } from 'lucide-react';
-import type { Balita, JenisKelamin, StatusBalita } from '@/lib/data/types';
-import { formatTanggalID } from '@/lib/data/mock-data';
-import { toast } from 'sonner';
+import { useState, useMemo } from "react";
+import { useStore } from "@/lib/store";
+import { BalitaFormModal } from "./balita-form-modal";
+import { PengukuranFormModal } from "./pengukuran-form-modal";
+import { SearchBar, EmptyState } from "@/components/shared/empty-state";
+import { Pagination } from "@/components/shared/pagination";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Plus,
+  Eye,
+  Pencil,
+  Trash2,
+  Scale,
+  Users,
+  Filter,
+  X,
+  ChevronDown,
+} from "lucide-react";
+import type { Balita, JenisKelamin, StatusBalita } from "@/lib/data/types";
+import { formatTanggalID } from "@/lib/data/mock-data";
+import { toast } from "sonner";
 
 const PAGE_SIZE = 8;
 
 export function BalitaRegisterView() {
-  const { balitaList, pengukuranList, viewBalitaDetail, deleteBalita } = useStore();
-  const [search, setSearch] = useState('');
+  const { balitaList, pengukuranList, viewBalitaDetail, deleteBalita } =
+    useStore();
+  const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingBalita, setEditingBalita] = useState<Balita | null>(null);
-  const [pengukuranModalBalita, setPengukuranModalBalita] = useState<Balita | null>(null);
+  const [pengukuranModalBalita, setPengukuranModalBalita] =
+    useState<Balita | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Balita | null>(null);
 
   // Advanced filters
-  const [filterGender, setFilterGender] = useState<string>('all');
-  const [filterStatus, setFilterStatus] = useState<string>('all');
-  const [filterAgeRange, setFilterAgeRange] = useState<string>('all');
+  const [filterGender, setFilterGender] = useState<string>("all");
+  const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [filterAgeRange, setFilterAgeRange] = useState<string>("all");
   const [showFilters, setShowFilters] = useState(false);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
     return balitaList.filter((b) => {
-      // Search filter
-      if (q && !b.namaLengkap.toLowerCase().includes(q) && !b.nik.includes(q) && !b.namaIbu.toLowerCase().includes(q)) {
+      // Search filter - dilindungi dengan Nullish Coalescing (??) agar tahan nilai null
+      if (
+        q &&
+        !(b.namaLengkap ?? "").toLowerCase().includes(q) &&
+        !(b.nik ?? "").toLowerCase().includes(q) &&
+        !(b.namaIbu ?? "").toLowerCase().includes(q)
+      ) {
         return false;
       }
-      // Gender filter
-      if (filterGender !== 'all' && b.jenisKelamin !== filterGender) return false;
+      // Gender filter - aman karena perbandingan string vs null tetap valid
+      if (filterGender !== "all" && b.jenisKelamin !== filterGender)
+        return false;
       // Status filter
-      if (filterStatus !== 'all' && b.status !== filterStatus) return false;
+      if (filterStatus !== "all" && b.status !== filterStatus) return false;
       // Age range filter
-      if (filterAgeRange !== 'all') {
-        const [min, max] = filterAgeRange.split('-').map(Number);
-        if (filterAgeRange === '60+') {
+      if (filterAgeRange !== "all") {
+        const [min, max] = filterAgeRange.split("-").map(Number);
+        if (filterAgeRange === "60+") {
           if (b.usiaBulan < 60) return false;
         } else if (b.usiaBulan < min || b.usiaBulan > max) {
           return false;
@@ -56,17 +80,22 @@ export function BalitaRegisterView() {
     });
   }, [balitaList, search, filterGender, filterStatus, filterAgeRange]);
 
-  const activeFilterCount = [filterGender, filterStatus, filterAgeRange].filter((f) => f !== 'all').length;
+  const activeFilterCount = [filterGender, filterStatus, filterAgeRange].filter(
+    (f) => f !== "all",
+  ).length;
 
   const clearFilters = () => {
-    setFilterGender('all');
-    setFilterStatus('all');
-    setFilterAgeRange('all');
+    setFilterGender("all");
+    setFilterStatus("all");
+    setFilterAgeRange("all");
   };
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
-  const pageData = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+  const pageData = filtered.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE,
+  );
 
   const handleAdd = () => {
     setEditingBalita(null);
@@ -81,8 +110,11 @@ export function BalitaRegisterView() {
   };
   const confirmDelete = () => {
     if (deleteTarget) {
-      deleteBalita(deleteTarget.id);
-      toast.success('Data balita dihapus', { description: deleteTarget.namaLengkap });
+      // FIX ERROR 1: Paksa deleteTarget.id menjadi String
+      deleteBalita(String(deleteTarget.id));
+      toast.success("Data balita dihapus", {
+        description: deleteTarget.namaLengkap,
+      });
       setDeleteTarget(null);
     }
   };
@@ -114,7 +146,9 @@ export function BalitaRegisterView() {
                   {activeFilterCount}
                 </span>
               )}
-              <ChevronDown className={`ml-1 h-3.5 w-3.5 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
+              <ChevronDown
+                className={`ml-1 h-3.5 w-3.5 transition-transform ${showFilters ? "rotate-180" : ""}`}
+              />
             </Button>
           </div>
 
@@ -122,18 +156,33 @@ export function BalitaRegisterView() {
           {showFilters && (
             <div className="mb-4 rounded-lg border border-border bg-muted/30 p-4">
               <div className="mb-3 flex items-center justify-between">
-                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Filter Lanjutan</p>
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Filter Lanjutan
+                </p>
                 {activeFilterCount > 0 && (
-                  <button onClick={clearFilters} className="flex items-center gap-1 text-xs text-emerald-600 hover:text-emerald-700 dark:text-emerald-400">
+                  <button
+                    onClick={clearFilters}
+                    className="flex items-center gap-1 text-xs text-emerald-600 hover:text-emerald-700 dark:text-emerald-400"
+                  >
                     <X className="h-3 w-3" /> Reset Filter
                   </button>
                 )}
               </div>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-muted-foreground">Jenis Kelamin</label>
-                  <Select value={filterGender} onValueChange={(v) => { setFilterGender(v); setPage(1); }}>
-                    <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                  <label className="text-xs font-medium text-muted-foreground">
+                    Jenis Kelamin
+                  </label>
+                  <Select
+                    value={filterGender}
+                    onValueChange={(v) => {
+                      setFilterGender(v);
+                      setPage(1);
+                    }}
+                  >
+                    <SelectTrigger className="h-9">
+                      <SelectValue />
+                    </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Semua</SelectItem>
                       <SelectItem value="Laki-laki">Laki-laki</SelectItem>
@@ -142,9 +191,19 @@ export function BalitaRegisterView() {
                   </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-muted-foreground">Status</label>
-                  <Select value={filterStatus} onValueChange={(v) => { setFilterStatus(v); setPage(1); }}>
-                    <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                  <label className="text-xs font-medium text-muted-foreground">
+                    Status
+                  </label>
+                  <Select
+                    value={filterStatus}
+                    onValueChange={(v) => {
+                      setFilterStatus(v);
+                      setPage(1);
+                    }}
+                  >
+                    <SelectTrigger className="h-9">
+                      <SelectValue />
+                    </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Semua</SelectItem>
                       <SelectItem value="Aktif">Aktif</SelectItem>
@@ -153,9 +212,19 @@ export function BalitaRegisterView() {
                   </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-muted-foreground">Rentang Usia</label>
-                  <Select value={filterAgeRange} onValueChange={(v) => { setFilterAgeRange(v); setPage(1); }}>
-                    <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                  <label className="text-xs font-medium text-muted-foreground">
+                    Rentang Usia
+                  </label>
+                  <Select
+                    value={filterAgeRange}
+                    onValueChange={(v) => {
+                      setFilterAgeRange(v);
+                      setPage(1);
+                    }}
+                  >
+                    <SelectTrigger className="h-9">
+                      <SelectValue />
+                    </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Semua Usia</SelectItem>
                       <SelectItem value="0-5">0-5 bulan</SelectItem>
@@ -171,7 +240,10 @@ export function BalitaRegisterView() {
               </div>
             </div>
           )}
-          <Button onClick={handleAdd} className="bg-emerald-600 hover:bg-emerald-700 w-full sm:w-auto">
+          <Button
+            onClick={handleAdd}
+            className="bg-emerald-600 hover:bg-emerald-700 w-full sm:w-auto"
+          >
             <Plus className="mr-2 h-4 w-4" /> Tambah Balita
           </Button>
         </div>
@@ -181,10 +253,17 @@ export function BalitaRegisterView() {
           <EmptyState
             icon={Users}
             title="Belum ada data balita"
-            description={search || activeFilterCount > 0 ? 'Tidak ada hasil yang cocok dengan filter/pencarian Anda.' : 'Tambahkan data balita pertama Anda.'}
+            description={
+              search || activeFilterCount > 0
+                ? "Tidak ada hasil yang cocok dengan filter/pencarian Anda."
+                : "Tambahkan data balita pertama Anda."
+            }
             action={
               !search && activeFilterCount === 0 ? (
-                <Button onClick={handleAdd} className="bg-emerald-600 hover:bg-emerald-700">
+                <Button
+                  onClick={handleAdd}
+                  className="bg-emerald-600 hover:bg-emerald-700"
+                >
                   <Plus className="mr-2 h-4 w-4" /> Tambah Balita
                 </Button>
               ) : undefined
@@ -207,37 +286,66 @@ export function BalitaRegisterView() {
               </thead>
               <tbody className="divide-y divide-border">
                 {pageData.map((b) => {
-                  const pengukuranCount = pengukuranList.filter((p) => p.balitaId === b.id).length;
+                  const pengukuranCount = pengukuranList.filter(
+                    (p) => p.balitaId === b.id,
+                  ).length;
                   return (
-                    <tr key={b.id} className="transition-colors hover:bg-muted/40">
+                    <tr
+                      key={b.id}
+                      className="transition-colors hover:bg-muted/40"
+                    >
                       <td className="px-4 py-3">
                         <button
-                          onClick={() => viewBalitaDetail(b.id)}
+                          // FIX ERROR 2: Paksa b.id menjadi String
+                          onClick={() => viewBalitaDetail(String(b.id))}
                           className="font-semibold text-foreground hover:text-emerald-600"
                         >
                           {b.namaLengkap}
                         </button>
                       </td>
-                      <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{b.nik}</td>
-                      <td className="px-4 py-3 text-muted-foreground">{b.usiaBulan} bln</td>
+                      <td className="px-4 py-3 font-mono text-xs text-muted-foreground">
+                        {b.nik || "-"}
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground">
+                        {b.usiaBulan} bln
+                      </td>
                       <td className="px-4 py-3">
-                        <span className={`inline-flex h-6 items-center rounded-md px-2 text-xs font-medium ${b.jenisKelamin === 'Laki-laki' ? 'bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-400' : 'bg-pink-100 text-pink-700 dark:bg-pink-500/15 dark:text-pink-400'}`}>
-                          {b.jenisKelamin === 'Laki-laki' ? 'L' : 'P'}
+                        <span
+                          className={`inline-flex h-6 items-center rounded-md px-2 text-xs font-medium ${
+                            b.jenisKelamin === "Laki-laki"
+                              ? "bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-400"
+                              : b.jenisKelamin === "Perempuan"
+                                ? "bg-pink-100 text-pink-700 dark:bg-pink-500/15 dark:text-pink-400"
+                                : "bg-gray-100 text-gray-600 dark:bg-gray-500/15 dark:text-gray-400"
+                          }`}
+                        >
+                          {b.jenisKelamin === "Laki-laki"
+                            ? "L"
+                            : b.jenisKelamin === "Perempuan"
+                              ? "P"
+                              : "-"}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-muted-foreground">{b.namaIbu}</td>
-                      <td className="px-4 py-3">
-                        <span className="text-muted-foreground">{pengukuranCount}x</span>
+                      <td className="px-4 py-3 text-muted-foreground">
+                        {b.namaIbu || "-"}
                       </td>
                       <td className="px-4 py-3">
-                        <span className={`inline-flex h-6 items-center rounded-md px-2 text-xs font-medium ${b.status === 'Aktif' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400' : 'bg-gray-100 text-gray-600 dark:bg-gray-500/15 dark:text-gray-400'}`}>
+                        <span className="text-muted-foreground">
+                          {pengukuranCount}x
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={`inline-flex h-6 items-center rounded-md px-2 text-xs font-medium ${b.status === "Aktif" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400" : "bg-gray-100 text-gray-600 dark:bg-gray-500/15 dark:text-gray-400"}`}
+                        >
                           {b.status}
                         </span>
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-end gap-1">
                           <button
-                            onClick={() => viewBalitaDetail(b.id)}
+                            // FIX ERROR 3: Paksa b.id menjadi String
+                            onClick={() => viewBalitaDetail(String(b.id))}
                             className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                             title="Lihat Detail"
                           >
@@ -285,7 +393,11 @@ export function BalitaRegisterView() {
         )}
       </Card>
 
-      <BalitaFormModal open={modalOpen} onOpenChange={setModalOpen} balita={editingBalita} />
+      <BalitaFormModal
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+        balita={editingBalita}
+      />
       {pengukuranModalBalita && (
         <PengukuranFormModal
           open={!!pengukuranModalBalita}
