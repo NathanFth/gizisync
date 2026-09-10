@@ -27,6 +27,7 @@ export default function Home() {
   const view = useStore((s) => s.view);
   const theme = useStore((s) => s.theme);
   const user = useStore((s) => s.user);
+  const hasHydrated = useStore((s) => s.hasHydrated);
   const commandPaletteOpen = useStore((s) => s.commandPaletteOpen);
   const toggleTheme = useStore((s) => s.toggleTheme);
 
@@ -38,6 +39,14 @@ export default function Home() {
 
   // BARU: Referensi untuk wadah scroll
   const mainRef = useRef<HTMLElement>(null);
+
+  // Pemicu rehidrasi Zustand secara manual, HANYA di client (aman, karena
+  // useEffect tidak pernah jalan di server). skipHydration: true di store.ts
+  // mematikan auto-hydrate bawaan, jadi tanpa baris ini hasHydrated tidak
+  // akan pernah menjadi true dan halaman akan macet di loading selamanya.
+  useEffect(() => {
+    useStore.persist.rehydrate();
+  }, []);
 
   // BARU: Efek pemicu scroll-to-top otomatis setiap kali view berubah
   useEffect(() => {
@@ -98,6 +107,17 @@ export default function Home() {
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [toggleTheme]);
+
+  // Tunggu Zustand selesai membaca localStorage sebelum memutuskan apa pun.
+  // Tanpa ini, render pertama setelah hard-reload selalu melihat user = null
+  // (rehidrasi belum selesai) sehingga salah mengira belum login.
+  if (!hasHydrated) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-600/30 border-t-emerald-600" />
+      </div>
+    );
+  }
 
   // Auth gate
   if (!user) {

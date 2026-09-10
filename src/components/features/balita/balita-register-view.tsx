@@ -302,6 +302,10 @@ export function BalitaRegisterView() {
                         >
                           {b.namaLengkap}
                         </button>
+                        {/* AUDIT TRAIL */}
+                        <div className="mt-0.5 text-[10px] text-muted-foreground/70">
+                          {b.createdByNama ?? "Data Migrasi Awal"}
+                        </div>
                       </td>
                       <td className="px-4 py-3 font-mono text-xs text-muted-foreground">
                         {b.nik || "-"}

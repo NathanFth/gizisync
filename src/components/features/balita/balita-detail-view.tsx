@@ -35,6 +35,7 @@ import {
   Info,
   CreditCard,
   Phone,
+  History,
 } from "lucide-react";
 import {
   LineChart,
@@ -384,6 +385,28 @@ export function BalitaDetailView() {
                 label="Panjang Lahir"
                 value={
                   balita.panjangLahirCm ? `${balita.panjangLahirCm} cm` : "-"
+                }
+              />
+
+              <div className="my-2 border-t border-border border-dashed"></div>
+
+              {/* AUDIT TRAIL */}
+              <InfoRow
+                icon={User}
+                label="Dicatat Oleh"
+                value={balita.createdByNama ?? "Data Migrasi Awal"}
+              />
+              <InfoRow
+                icon={History}
+                label="Terakhir Diubah"
+                value={
+                  balita.updatedByNama
+                    ? `${balita.updatedByNama}${
+                        balita.updatedAt
+                          ? ` · ${formatTanggalID(balita.updatedAt)}`
+                          : ""
+                      }`
+                    : "Belum pernah diubah"
                 }
               />
             </div>
@@ -817,7 +840,15 @@ export function BalitaDetailView() {
                         className="transition-colors hover:bg-muted/40"
                       >
                         <td className="px-4 py-3 text-muted-foreground">
-                          {formatTanggalID(p.tanggalPengukuran)}
+                          <div>{formatTanggalID(p.tanggalPengukuran)}</div>
+                          {/* AUDIT TRAIL */}
+                          <div className="mt-0.5 text-[10px] text-muted-foreground/70">
+                            {p.updatedByNama
+                              ? `Diubah: ${p.updatedByNama}`
+                              : p.createdByNama
+                                ? `Oleh: ${p.createdByNama}`
+                                : "Data Migrasi Awal"}
+                          </div>
                         </td>
                         <td className="px-4 py-3 text-muted-foreground">
                           {p.usiaBulan} bln

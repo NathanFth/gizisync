@@ -45,6 +45,15 @@ export interface Balita {
   status: StatusBalita;
   sumberData: "INPUT_MANUAL" | "IMPOR_EXCEL";
   catatanValidasi: string | null;
+  // --- AUDIT TRAIL (BARU) ---
+  // Optional dengan sengaja: field ini diisi server (bukan oleh form input),
+  // jadi tidak perlu masuk daftar Omit<> di store.ts manapun.
+  createdAt?: string; // ISO datetime, diisi otomatis saat INSERT
+  createdBy?: string | null; // uuid kader; null = data migrasi awal (tidak diketahui)
+  createdByNama?: string | null; // nama kader hasil JOIN; null jika createdBy null
+  updatedAt?: string; // ISO datetime, di-refresh trigger DB tiap UPDATE
+  updatedBy?: string | null; // uuid kader; null = belum pernah diedit sejak dibuat/migrasi
+  updatedByNama?: string | null;
 }
 
 export type IndikatorZScore = "BBU" | "TBU" | "BBTB" | "IMTU" | "LKA" | "LILA";
@@ -65,6 +74,13 @@ export interface PengukuranBalita {
   zScoreLKA: number | null;
   zScoreLILA: number | null;
   statusGizi: string | null;
+  // --- AUDIT TRAIL (BARU) --- lihat catatan optional di interface Balita
+  createdAt?: string;
+  createdBy?: string | null;
+  createdByNama?: string | null;
+  updatedAt?: string;
+  updatedBy?: string | null;
+  updatedByNama?: string | null;
 }
 
 export interface ZScoreChartPoint {

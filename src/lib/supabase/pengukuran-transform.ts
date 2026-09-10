@@ -16,7 +16,16 @@ export const pengukuranInputSchema = z.object({
 
 export type PengukuranInput = z.infer<typeof pengukuranInputSchema>;
 
-/** snake_case (baris Supabase) -> camelCase (tipe PengukuranBalita aplikasi).
+// ============================================================================
+// AUDIT TRAIL: string select yang dipakai ulang semua route pengukuran supaya
+// nama kader (created_by / updated_by) ikut ter-JOIN tanpa request tambahan.
+// Hint "!pengukuran_created_by_fkey" / "!pengukuran_updated_by_fkey" WAJIB ada
+// karena tabel pengukuran punya DUA foreign key ke kader.
+// ============================================================================
+export const PENGUKURAN_SELECT_WITH_KADER =
+  "*, created_by_kader:kader!pengukuran_created_by_fkey(nama_lengkap), updated_by_kader:kader!pengukuran_updated_by_fkey(nama_lengkap)";
+
+/** snake_case (baris Supabase, hasil JOIN PENGUKURAN_SELECT_WITH_KADER) -> camelCase (tipe PengukuranBalita aplikasi).
  *  Kolom numeric dibungkus Number() karena Supabase mengembalikannya sebagai
  *  string, bukan number murni. */
 export function toPengukuran(row: Record<string, any>): PengukuranBalita {
@@ -38,6 +47,13 @@ export function toPengukuran(row: Record<string, any>): PengukuranBalita {
     zScoreLKA: row.z_score_lka_u !== null ? Number(row.z_score_lka_u) : null,
     zScoreLILA: row.z_score_lila_u !== null ? Number(row.z_score_lila_u) : null,
     statusGizi: row.status_gizi,
+    // --- AUDIT TRAIL ---
+    createdAt: row.created_at,
+    createdBy: row.created_by,
+    createdByNama: row.created_by_kader?.nama_lengkap ?? null,
+    updatedAt: row.updated_at,
+    updatedBy: row.updated_by,
+    updatedByNama: row.updated_by_kader?.nama_lengkap ?? null,
   };
 }
 

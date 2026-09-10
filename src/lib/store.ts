@@ -44,6 +44,13 @@ interface AppState {
   setUser: (user: AuthUser | null) => void;
   logout: () => void;
 
+  // Hydration flag: true setelah Zustand selesai membaca localStorage.
+  // WAJIB dicek oleh komponen guard sebelum memutuskan redirect berdasarkan `user`,
+  // karena pada render pertama setelah reload, `user` masih null sesaat
+  // sebelum rehidrasi selesai (lihat onRehydrateStorage di bawah).
+  hasHydrated: boolean;
+  setHasHydrated: (hasHydrated: boolean) => void;
+
   // Navigation
   view: AppView;
   selectedBalitaId: string | null;
@@ -166,6 +173,10 @@ export const useStore = create<AppState>()(
       user: null,
       setUser: (user) => set({ user, view: "dashboard" }),
       logout: () => set({ user: null, view: "dashboard", sidebarOpen: false }),
+
+      // --- Hydration ---
+      hasHydrated: false,
+      setHasHydrated: (hasHydrated) => set({ hasHydrated }),
 
       // --- Initial state ---
       view: "dashboard",
@@ -482,6 +493,20 @@ export const useStore = create<AppState>()(
         notifikasiList: state.notifikasiList,
         theme: state.theme,
       }),
+      // PENTING: matikan auto-hydrate saat store dibuat.
+      // Next.js menjalankan komponen "use client" ini di server dulu (SSR pass),
+      // dan localStorage tidak ada di server — kalau auto-hydrate dibiarkan aktif,
+      // percobaan rehidrasi "habis terpakai" di server dan TIDAK akan diulang lagi
+      // saat kode benar-benar berjalan di browser. Rehidrasi harus dipicu manual
+      // dari client lewat useStore.persist.rehydrate() (lihat page.tsx).
+      skipHydration: true,
+      // Dipanggil setiap kali rehidrasi selesai (baik otomatis maupun manual
+      // lewat useStore.persist.rehydrate()). Guard di layout/page HARUS
+      // menunggu hasHydrated === true sebelum memutuskan redirect berdasarkan
+      // `user`, kalau tidak akan selalu mengira belum login.
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
+      },
     },
   ),
 );

@@ -45,7 +45,20 @@ export const balitaUpdateSchema = balitaCreateSchema.partial();
 export type BalitaCreateInput = z.infer<typeof balitaCreateSchema>;
 export type BalitaUpdateInput = z.infer<typeof balitaUpdateSchema>;
 
-/** camelCase (aplikasi) -> snake_case (kolom Supabase) */
+// ============================================================================
+// AUDIT TRAIL: string select yang dipakai ulang semua route balita supaya nama
+// kader (created_by / updated_by) ikut ter-JOIN tanpa request tambahan.
+// Hint "!balita_created_by_fkey" / "!balita_updated_by_fkey" WAJIB ada karena
+// tabel balita punya DUA foreign key ke kader — tanpa hint ini PostgREST tidak
+// tahu FK mana yang harus dipakai untuk masing-masing alias.
+// ============================================================================
+export const BALITA_SELECT_WITH_KADER =
+  "*, created_by_kader:kader!balita_created_by_fkey(nama_lengkap), updated_by_kader:kader!balita_updated_by_fkey(nama_lengkap)";
+
+/** camelCase (aplikasi) -> snake_case (kolom Supabase)
+ *  CATATAN: created_by/updated_by SENGAJA tidak pernah dipetakan di sini.
+ *  Keduanya wajib diisi di route handler dari sesi kader yang login
+ *  (lib/supabase/current-kader.ts), tidak boleh datang dari body request. */
 export function toRow(input: BalitaCreateInput | BalitaUpdateInput) {
   const row: Record<string, unknown> = {};
   if (input.namaLengkap !== undefined) row.nama_lengkap = input.namaLengkap;
@@ -72,7 +85,7 @@ export function toRow(input: BalitaCreateInput | BalitaUpdateInput) {
   return row;
 }
 
-/** snake_case (baris Supabase) -> camelCase (tipe Balita aplikasi) */
+/** snake_case (baris Supabase, hasil JOIN BALITA_SELECT_WITH_KADER) -> camelCase (tipe Balita aplikasi) */
 export function toBalita(row: Record<string, any>): Balita {
   return {
     id: row.id,
@@ -92,6 +105,13 @@ export function toBalita(row: Record<string, any>): Balita {
     status: row.status,
     sumberData: row.sumber_data,
     catatanValidasi: row.catatan_validasi,
+    // --- AUDIT TRAIL ---
+    createdAt: row.created_at,
+    createdBy: row.created_by,
+    createdByNama: row.created_by_kader?.nama_lengkap ?? null,
+    updatedAt: row.updated_at,
+    updatedBy: row.updated_by,
+    updatedByNama: row.updated_by_kader?.nama_lengkap ?? null,
   };
 }
 

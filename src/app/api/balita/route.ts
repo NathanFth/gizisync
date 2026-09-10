@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
-import { toBalita, balitaErrorResponse } from "@/lib/supabase/balita-transform";
+import {
+  toBalita,
+  balitaErrorResponse,
+  BALITA_SELECT_WITH_KADER,
+} from "@/lib/supabase/balita-transform";
+import { getCurrentKaderId } from "@/lib/supabase/current-kader";
 import { z } from "zod";
 import type { Balita } from "@/lib/data/types";
 
@@ -43,7 +48,7 @@ const balitaCreateSchema = z.object({
 export async function GET() {
   const { data, error } = await supabaseAdmin
     .from("balita")
-    .select("*")
+    .select(BALITA_SELECT_WITH_KADER)
     .order("nama_lengkap", { ascending: true });
 
   if (error) {
@@ -66,6 +71,15 @@ export async function POST(request: Request) {
     );
   }
 
+  // AUDIT TRAIL: identitas kader diambil dari sesi server, BUKAN dari body.
+  const kaderId = await getCurrentKaderId();
+  if (!kaderId) {
+    return NextResponse.json(
+      { error: "Akses Ditolak. Silakan login." },
+      { status: 401 },
+    );
+  }
+
   const rowToInsert = {
     nik: parsed.data.nik,
     nama_lengkap: parsed.data.namaLengkap,
@@ -82,12 +96,13 @@ export async function POST(request: Request) {
     status: parsed.data.status,
     // sumber_data dihapus dari payload insert
     catatan_validasi: parsed.data.catatanValidasi || null,
+    created_by: kaderId, // AUDIT TRAIL: hanya diisi saat INSERT, tidak pernah di-update lagi
   };
 
   const { data, error } = await supabaseAdmin
     .from("balita")
     .insert(rowToInsert)
-    .select("*")
+    .select(BALITA_SELECT_WITH_KADER)
     .single();
 
   if (error) {

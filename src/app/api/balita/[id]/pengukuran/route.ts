@@ -4,7 +4,9 @@ import {
   pengukuranInputSchema,
   toPengukuran,
   pengukuranErrorResponse,
+  PENGUKURAN_SELECT_WITH_KADER,
 } from "@/lib/supabase/pengukuran-transform";
+import { getCurrentKaderId } from "@/lib/supabase/current-kader";
 import {
   hitungZScore,
   getStatusGiziKeseluruhan,
@@ -20,6 +22,15 @@ export async function POST(request: Request, { params }: RouteContext) {
     return NextResponse.json(
       { error: "Data tidak valid", detail: parsed.error.flatten() },
       { status: 400 },
+    );
+  }
+
+  // AUDIT TRAIL: identitas kader diambil dari sesi server, BUKAN dari body.
+  const kaderId = await getCurrentKaderId();
+  if (!kaderId) {
+    return NextResponse.json(
+      { error: "Akses Ditolak. Silakan login." },
+      { status: 401 },
     );
   }
 
@@ -117,8 +128,9 @@ export async function POST(request: Request, { params }: RouteContext) {
       z_score_lka_u: zScoreLKA,
       z_score_lila_u: zScoreLILA,
       status_gizi: statusGizi,
+      created_by: kaderId, // AUDIT TRAIL: hanya diisi saat INSERT
     })
-    .select("*")
+    .select(PENGUKURAN_SELECT_WITH_KADER)
     .single();
 
   if (error) {

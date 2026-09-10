@@ -108,7 +108,7 @@ export function DashboardView() {
       {/* Today's Summary Banner */}
       <TodaysSummary />
 
-      {/* Quick Actions */}
+      {/* Quick Actions
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         <QuickAction
           icon={Plus}
@@ -128,13 +128,13 @@ export function DashboardView() {
           onClick={() => setView("laporan")}
           color="amber"
         />
-        {/* <QuickAction
+         <QuickAction
           icon={Utensils}
           label="Kelola PMT"
           onClick={() => setView("pmt")}
           color="rose"
-        /> */}
-      </div>
+        />
+      </div> */}
 
       {/* Monthly Trends Chart */}
       <Card className="p-5">

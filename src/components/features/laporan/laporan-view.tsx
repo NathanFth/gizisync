@@ -268,7 +268,7 @@ export function LaporanView() {
             {/* FASE 3: Filter Status Gizi Khusus Laporan */}
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-muted-foreground">
-                Status Gizi (Puskesmas)
+                Status Gizi
               </label>
               <Select value={filterGizi} onValueChange={setFilterGizi}>
                 <SelectTrigger className="w-full sm:w-44">
@@ -334,7 +334,7 @@ export function LaporanView() {
       <Card className="overflow-hidden">
         <div className="border-b border-border p-4">
           <h3 className="text-sm font-semibold text-foreground">
-            Data Laporan — {NAMA_BULAN[bulan]} {tahun}
+            Data Laporan {NAMA_BULAN[bulan]} {tahun}
           </h3>
           <p className="mt-0.5 text-xs text-muted-foreground">
             Menampilkan {filteredRecords.length} record
