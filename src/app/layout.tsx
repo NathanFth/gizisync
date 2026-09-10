@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "GiziSync — Sistem Informasi Manajemen Gizi Posyandu",
+  title: "GiziSync - Sistem Informasi Manajemen Gizi Posyandu",
   description:
     "Sistem Informasi Manajemen Gizi, Posyandu, dan Deteksi Dini Stunting Balita — dilengkapi kalkulator Z-Score berstandar WHO, Buku Register Balita digital, dan laporan bulanan otomatis.",
   keywords: [
