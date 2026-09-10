@@ -62,7 +62,10 @@ function GlassFeaturePill({
 ───────────────────────────────────────────────────────────── */
 function OrganicBackground() {
   return (
-    <div className="pointer-events-none absolute inset-0 hidden lg:block" aria-hidden="true">
+    <div
+      className="pointer-events-none absolute inset-0 hidden lg:block"
+      aria-hidden="true"
+    >
       <svg
         width="100%"
         height="100%"
@@ -220,11 +223,17 @@ export function LoginView() {
           description: "Login berhasil",
         });
 
+        // Ambil nama asli dari tabel kader, bukan dari auth metadata
+        const { data: kaderData } = await supabase
+          .from("kader")
+          .select("nama_lengkap")
+          .eq("id", data.user.id)
+          .single();
+
         setUser({
           username: data.user.email!,
           namaLengkap:
-            data.user.user_metadata?.nama_lengkap ||
-            data.user.email!.split("@")[0],
+            kaderData?.nama_lengkap || data.user.email!.split("@")[0],
           peran: "Kader Posyandu",
           loginAt: new Date().toISOString(),
         });
@@ -247,15 +256,12 @@ export function LoginView() {
       <OrganicBackground />
 
       <div className="relative z-10 flex min-h-screen flex-col lg:h-full lg:flex-row">
-
         {/* ══ LEFT: Mobile hero + Desktop branding ══ */}
         <section className="relative flex flex-col overflow-hidden px-7 pb-16 pt-7 lg:w-[57%] lg:justify-between lg:overflow-visible lg:px-14 lg:py-14">
-
           <MobileHeroBackground />
 
           {/* ── Mobile hero content ── */}
           <div className="relative animate-in fade-in slide-in-from-bottom-3 duration-500 lg:hidden">
-
             {/* Brand row */}
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/20 ring-1 ring-white/25 backdrop-blur-sm">
@@ -278,8 +284,8 @@ export function LoginView() {
               <span className="text-emerald-200">Lebih Mudah</span>
             </h2>
             <p className="mt-2.5 max-w-[300px] text-[12px] leading-[1.6] text-emerald-100/75">
-              Pantau tumbuh kembang balita dan deteksi stunting dini
-              berstandar WHO.
+              Pantau tumbuh kembang balita dan deteksi stunting dini berstandar
+              WHO.
             </p>
 
             {/* Feature pills 2×2 */}
@@ -309,7 +315,6 @@ export function LoginView() {
 
           {/* ── Desktop full brand content ── */}
           <div className="hidden h-full animate-in flex-col justify-between fade-in duration-700 lg:flex">
-
             {/* Top: logo + badge */}
             <div className="flex items-center gap-3">
               <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/20 ring-1 ring-white/25 backdrop-blur-sm">
@@ -386,7 +391,6 @@ export function LoginView() {
         */}
         <section className="relative flex flex-1 items-start justify-center px-6 pb-10 pt-5 lg:items-center lg:overflow-y-auto lg:px-14 lg:py-0">
           <div className="w-full max-w-[340px] animate-in fade-in slide-in-from-bottom-3 fill-mode-both [animation-delay:120ms]">
-
             {/* Form heading — kini selalu terlihat di mobile */}
             <div className="mb-7">
               <h1 className="text-[26px] font-bold leading-tight tracking-tight text-gray-900">
@@ -398,7 +402,6 @@ export function LoginView() {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
-
               {/* Email field */}
               <div className="space-y-[7px]">
                 <Label
