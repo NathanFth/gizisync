@@ -3,12 +3,13 @@ import { supabaseAdmin } from "@/lib/supabase/admin";
 import {
   toPengukuran,
   pengukuranErrorResponse,
+  PENGUKURAN_SELECT_WITH_KADER,
 } from "@/lib/supabase/pengukuran-transform";
 
 export async function GET() {
   const { data, error } = await supabaseAdmin
     .from("pengukuran")
-    .select("*")
+    .select(PENGUKURAN_SELECT_WITH_KADER)
     .order("tanggal_pengukuran", { ascending: false });
 
   if (error) {
