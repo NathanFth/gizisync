@@ -723,7 +723,7 @@ export function useDashboardStats() {
     });
 
     const giziBaik = latestPengukuran.filter(
-      (p) => p && p.statusGizi === "Normal", // Sesuai dengan terminologi baru
+      (p) => p && (p.statusGizi === "Normal" || p.statusGizi === "Tinggi"), // Selaras dengan useGiziDistribusi: "Tinggi" bukan masalah gizi pada TB/U
     ).length;
     const punyaPengukuran = latestPengukuran.filter(Boolean).length;
     const persentaseGiziBaik =
@@ -778,7 +778,7 @@ export function useDashboardStats() {
         .filter(Boolean);
       if (monthlyLatest.length === 0) return null;
       const baik = monthlyLatest.filter(
-        (p) => p!.statusGizi === "Normal",
+        (p) => p!.statusGizi === "Normal" || p!.statusGizi === "Tinggi",
       ).length;
       return Math.round((baik / monthlyLatest.length) * 100);
     };
