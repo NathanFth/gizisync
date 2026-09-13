@@ -167,7 +167,7 @@ let nextJadwalId = 100;
 let nextNotifikasiId = 1000;
 
 export const useStore = create<AppState>()(
-  persist(
+  persist<AppState, [], [], Partial<AppState>>(
     (set, get) => ({
       // --- Auth ---
       user: null,
@@ -478,8 +478,6 @@ export const useStore = create<AppState>()(
     }),
     {
       name: "gizisync-store",
-      // Hanya menyematkan modul lokal yang belum di-migrate.
-      // balitaList dan pengukuranList TIDAK disimpan di localStorage lagi.
       partialize: (state) => ({
         user: state.user,
         ibuHamilList: state.ibuHamilList,
@@ -493,17 +491,7 @@ export const useStore = create<AppState>()(
         notifikasiList: state.notifikasiList,
         theme: state.theme,
       }),
-      // PENTING: matikan auto-hydrate saat store dibuat.
-      // Next.js menjalankan komponen "use client" ini di server dulu (SSR pass),
-      // dan localStorage tidak ada di server — kalau auto-hydrate dibiarkan aktif,
-      // percobaan rehidrasi "habis terpakai" di server dan TIDAK akan diulang lagi
-      // saat kode benar-benar berjalan di browser. Rehidrasi harus dipicu manual
-      // dari client lewat useStore.persist.rehydrate() (lihat page.tsx).
       skipHydration: true,
-      // Dipanggil setiap kali rehidrasi selesai (baik otomatis maupun manual
-      // lewat useStore.persist.rehydrate()). Guard di layout/page HARUS
-      // menunggu hasHydrated === true sebelum memutuskan redirect berdasarkan
-      // `user`, kalau tidak akan selalu mengira belum login.
       onRehydrateStorage: () => (state) => {
         state?.setHasHydrated(true);
       },
@@ -725,7 +713,7 @@ export function useDashboardStats() {
     const giziBaik = latestPengukuran.filter(
       (p) => p && (p.statusGizi === "Normal" || p.statusGizi === "Tinggi"), // Selaras dengan useGiziDistribusi: "Tinggi" bukan masalah gizi pada TB/U
     ).length;
-    const punyaPengukuran = latestPengukuran.filter(Boolean).length;
+        const punyaPengukuran = latestPengukuran.filter((p) => p && p.statusGizi).length;
     const persentaseGiziBaik =
       punyaPengukuran > 0 ? Math.round((giziBaik / punyaPengukuran) * 100) : 0;
 

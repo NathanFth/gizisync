@@ -145,10 +145,6 @@ export function hitungZScore(
   return Number(z.toFixed(2));
 }
 
-// =============================================================================
-// PEMBARUAN FASE 2: PENGHALUSAN TERMINOLOGI GIZI
-// Sesuai dengan Business Requirement dari Posyandu
-// =============================================================================
 export function getStatusGizi(
   zScore: number,
   indikator: IndikatorZScore,
@@ -185,7 +181,6 @@ export function getStatusGizi(
         label: "Berat Badan Normal",
         severity: 0,
       };
-    // Untuk z > 1, semua dikategorikan "BB Lebih" (Obesitas dihaluskan)
     if (zScore <= 2)
       return {
         zScore,
@@ -208,7 +203,6 @@ export function getStatusGizi(
     };
   }
 
-  // 2. Indikator Tinggi Badan / Umur (TB/U)
   if (indikator === "TBU") {
     if (zScore < -3)
       return { zScore, status: "Pendek", label: "Sangat Pendek", severity: 3 };
@@ -219,7 +213,6 @@ export function getStatusGizi(
     return { zScore, status: "Tinggi", label: "Tinggi", severity: 0 };
   }
 
-  // 3. Indikator Lingkar Kepala / Umur (LKA) -> Tetap Medis
   if (indikator === "LKA") {
     if (zScore < -2)
       return {
@@ -238,7 +231,6 @@ export function getStatusGizi(
     };
   }
 
-  // 4. Fallback: Berlaku seragam untuk "BBTB", "IMTU", dan "LILA"
   if (zScore < -3)
     return { zScore, status: "Gizi Buruk", label: "Gizi Buruk", severity: 3 };
   if (zScore < -2)
@@ -258,7 +250,6 @@ export function getStatusGizi(
       severity: 1,
     };
 
-  // Obesitas (z > 3) digabung ke dalam Gizi Lebih, tapi severity internal tetap dibedakan
   if (zScore <= 3)
     return { zScore, status: "Gizi Lebih", label: "Gizi Lebih", severity: 2 };
   return {
@@ -274,7 +265,6 @@ export function getStatusGiziKeseluruhan(
   zTBU: number,
   zBBTB: number,
 ): string {
-  // Return string langsung karena ini penentu akhir yang masuk Database
   if (isNaN(zBBU) && isNaN(zTBU) && isNaN(zBBTB)) {
     return "Di luar rentang WHO";
   }
@@ -283,7 +273,6 @@ export function getStatusGiziKeseluruhan(
   const sTBU = getStatusGizi(zTBU, "TBU");
   const sBBTB = getStatusGizi(zBBTB, "BBTB");
 
-  // Logika Prioritas Status (Dari yang paling darurat ke paling normal)
   if (sTBU.status === "Pendek" && sTBU.severity === 3) return "Pendek";
   if (
     sBBTB.status === "Gizi Buruk" ||
@@ -1153,11 +1142,6 @@ const BMI_HEIGHT_GIRLS: Record<number, [number, number, number]> = {
   60: [-0.5684, 15.2747, 0.09789],
 };
 
-// =============================================================================
-// TABEL LKA (Lingkar Kepala Anak / Head Circumference-for-age)
-// 0-60 Bulan
-// =============================================================================
-
 const HCFA_BOYS: Record<number, [number, number, number]> = {
   0: [1.0, 34.4618, 0.03686],
   1: [1.0, 37.2759, 0.03133],
@@ -1285,11 +1269,6 @@ const HCFA_GIRLS: Record<number, [number, number, number]> = {
   59: [1.0, 49.8789, 0.02852],
   60: [1.0, 49.9229, 0.0285],
 };
-
-// =============================================================================
-// TABEL LiLA (Lingkar Lengan Atas / MUAC-for-age)
-// 3-60 Bulan
-// =============================================================================
 
 const ACFA_BOYS: Record<number, [number, number, number]> = {
   3: [0.3928, 13.4817, 0.07475],
