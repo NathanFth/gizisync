@@ -74,7 +74,7 @@ export function LoginView() {
 
         {/* Footer */}
         <div className="relative z-10 flex items-center justify-between text-xs text-emerald-100">
-          <span>© 2026 GiziSync · Posyandu Melati RW 06</span>
+          <span>© 2026 GiziSync · Posyandu Cempaka 6</span>
           <span>v2.0.0</span>
         </div>
       </div>

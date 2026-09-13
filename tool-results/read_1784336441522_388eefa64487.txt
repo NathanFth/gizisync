@@ -124,7 +124,7 @@
    124→   124→    peran: 'Kader Posyandu',
    125→   125→  },
    126→   126→  posyandu: {
-   127→   127→    namaPosyandu: 'Posyandu Melati RW 06',
+   127→   127→    namaPosyandu: 'Posyandu Cempaka 6',
    128→   128→    namaKetua: 'Hj. Ratna Ningsih',
    129→   129→    alamatLengkap: 'Jl. Mawar Merah No. 15, RT 01/RW 06',
    130→   130→    kelurahan: 'Setia Budi',

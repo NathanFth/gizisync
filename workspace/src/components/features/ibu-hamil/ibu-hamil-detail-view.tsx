@@ -127,7 +127,7 @@ export function IbuHamilDetailView() {
       <body>
         <div class="header">
           <h1>KARTU IBU HAMIL (KIH) — POSYANDU</h1>
-          <p>Posyandu Melati RW 06</p>
+          <p>Posyandu Cempaka 6</p>
           <p>Dicetak: ${new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
         </div>
 

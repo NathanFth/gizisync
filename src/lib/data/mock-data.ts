@@ -616,7 +616,7 @@ export const seedPengaturan: PengaturanData = {
     peran: "Kader Posyandu",
   },
   posyandu: {
-    namaPosyandu: "Posyandu Melati RW 06",
+    namaPosyandu: "Posyandu Cempaka 6",
     namaKetua: "Hj. Ratna Ningsih",
     alamatLengkap: "Jl. Mawar Merah No. 15, RT 01/RW 06",
     kelurahan: "Setia Budi",

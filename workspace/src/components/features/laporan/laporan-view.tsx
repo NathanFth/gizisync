@@ -127,7 +127,7 @@ export function LaporanView() {
         </head>
         <body>
           <h1>Laporan Bulanan Posyandu</h1>
-          <div class="meta">Periode: ${NAMA_BULAN[bulan]} ${tahun} · Posyandu Melati RW 06</div>
+          <div class="meta">Periode: ${NAMA_BULAN[bulan]} ${tahun} · Posyandu Cempaka 6</div>
           <div class="summary">
             <div class="summary-card"><div class="label">Balita Ditimbang</div><div class="value">${stats.totalBalitaDitimbang}</div></div>
             <div class="summary-card"><div class="label">Kasus Stunting Baru</div><div class="value">${stats.kasusStuntingBaru}</div></div>
